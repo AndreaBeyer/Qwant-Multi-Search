@@ -138,7 +138,11 @@ function clickImageHandler() {
 function createButton(svg) {
     const button = $create("a");
     button.className = "button";
-    button.innerHTML = svg;
+
+    const svgDocument = new DOMParser().parseFromString(svg, "image/svg+xml");
+    if (svgDocument.documentElement.localName === "svg") {
+        button.appendChild(document.importNode(svgDocument.documentElement, true));
+    }
 
     return button;
 }
