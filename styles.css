@@ -1,0 +1,38 @@
+.button_container {
+    flex-direction: column;
+    display: flex;
+    text-align: center;
+    margin: auto;
+    left: 0;
+    margin-bottom: 20px;
+}
+
+.button {
+    z-index: 1000;
+    color: var(--search-text-01);
+    display: inline-block;
+    margin: auto 0 0;
+    cursor: pointer;
+    background-color: transparent;
+    border: none;
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+.button:hover {
+    text-decoration: none;
+}
+
+body[data-theme="dark"] .button #deepl {
+    filter: invert(1);
+}
+
+body[data-theme="dark"] .button #wiki,
+body[data-theme="dark"] .button #gpt {
+    fill: #fff;
+}
+
+body[data-theme="light"] .button #wiki,
+body[data-theme="light"] .button #gpt {
+    fill: #202124;
+}

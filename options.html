@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Qwant search enhancer — Options</title>
+  <link rel="stylesheet" href="options.css">
+  <script src="options.js" defer></script>
+</head>
+<body>
+  <main>
+    <h1>Qwant search enhancer</h1>
+    <p>Choisissez les boutons à afficher. Les changements sont enregistrés automatiquement.</p>
+    <form id="settings">
+      <label><input type="checkbox" name="google"> Google</label>
+      <label><input type="checkbox" name="wikipedia"> Wikipédia</label>
+      <label><input type="checkbox" name="youtube"> YouTube</label>
+      <label><input type="checkbox" name="maps"> Google Maps</label>
+      <label><input type="checkbox" name="news"> Google Actualités</label>
+      <label><input type="checkbox" name="deepl"> DeepL</label>
+      <label><input type="checkbox" name="chatgpt"> ChatGPT</label>
+      <p class="hint">Rechargez Qwant pour appliquer les changements.</p>
+      <span id="status" role="status" aria-live="polite"></span>
+    </form>
+  </main>
+</body>
+</html>

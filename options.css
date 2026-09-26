@@ -1,0 +1,22 @@
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  width: 320px;
+  padding: 16px;
+  color: #202124;
+  background: #f7f8fa;
+  font: 16px/1.5 system-ui, sans-serif;
+}
+
+main { padding: 4px; }
+
+h1 { margin: 0; font-size: 1.5rem; }
+main > p { margin: 8px 0 22px; color: #5f6368; }
+
+form { display: grid; gap: 4px; }
+label { display: flex; align-items: center; gap: 10px; padding: 7px 2px; cursor: pointer; }
+input { width: 17px; height: 17px; accent-color: #1769aa; }
+
+.hint { margin: 14px 0 2px; color: #5f6368; font-size: .85rem; }
+#status { color: #287a3d; font-size: .85rem; }

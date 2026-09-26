@@ -1,0 +1,53 @@
+{
+  "name": "Qwant search enhancer",
+  "version": "1.0.11",
+  "author": "Andr\u00e9a Beyer",
+  "description": "One click search through Google and other services for Qwant.",
+  "permissions": [
+    "storage",
+    "https://www.qwant.com/*",
+    "https://www.deepl.com/*"
+  ],
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
+  "browser_action": {
+    "default_title": "Boutons de recherche Qwant",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "images/action16.png",
+      "32": "images/action32.png",
+      "48": "images/action48.png"
+    }
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "qwant-search-enhancer@andreabeyer.fr"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.qwant.com/",
+        "https://www.qwant.com/*",
+        "https://www.deepl.com/*"
+      ],
+      "run_at": "document_start",
+      "js": [
+        "helpers.js",
+        "svgs.js",
+        "script.js"
+      ],
+      "css": [
+        "styles.css"
+      ]
+    }
+  ],
+  "icons": {
+    "16": "images/icon16.png",
+    "48": "images/icon48.png",
+    "128": "images/icon128.png"
+  },
+  "manifest_version": 2
+}
