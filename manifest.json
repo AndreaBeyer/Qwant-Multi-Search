@@ -1,6 +1,6 @@
 {
   "name": "Qwant search enhancer",
-  "version": "1.0.14",
+  "version": "1.0.15",
   "author": "Andr\u00e9a Beyer",
   "description": "One click search through Google and other services for Qwant.",
   "permissions": [
