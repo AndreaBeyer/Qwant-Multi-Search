@@ -72,21 +72,19 @@ Puis :
 Si le chargement direct du `manifest.json` pose problème,
 vous pouvez charger le fichier ZIP de l’extension :
 
-1.  Créez le ZIP depuis le dossier du projet :
+1. Créez le ZIP depuis le dépôt :
 
-``` bash
-cd "$HOME/Documents/GitHub/Qwant search enhancer"
-zip -r Qwant-search-enhancer.zip Qwant-search-enhancer
+```bash
+git clone https://github.com/AndreaBeyer/Qwant-search-enhancer.git
+cd Qwant-search-enhancer
+zip -r ../Qwant-search-enhancer.zip .
 ```
+Le fichier `Qwant-search-enhancer.zip` est créé dans le dossier parent.
 
 2.  Dans Firefox, ouvrez `about:debugging`.
 3.  Cliquez sur **Ce Firefox**.
 4.  Cliquez sur **Charger un module complémentaire temporaire…**
 5.  Sélectionnez `Qwant-search-enhancer.zip`.
-
-> Si le ZIP fonctionne alors que le `manifest.json` ne fonctionne pas,
-> le problème peut venir de l’environnement sandboxé de Firefox Flatpak
-> plutôt que de l’extension.
 
 ## 🌐 Installation sur Chrome et Chromium
 
