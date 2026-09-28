@@ -117,7 +117,7 @@ Le fichier `Qwant-search-enhancer.zip` est créé dans le dossier parent.
 
 ### Chrome Web Store
 
-L’extension est destinée à être distribuée sur le **Chrome Web Store**.
+L’extension est disponible sur le **Chrome Web Store**.
 
 👉 [Chrome Web Store](https://chromewebstore.google.com/detail/qwant-search-enhancer/kepafadhpgppildfnbkndiebkpojjcgm)
 
