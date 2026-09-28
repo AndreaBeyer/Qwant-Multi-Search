@@ -1,17 +1,6 @@
 window.onload = function () {
 
-    //////////////////////////// Deepl Translate ///////////////////////////////////
-
-    const deeplUrl = new URL($url);
-    const isDeepLTranslator = deeplUrl.hostname === "www.deepl.com"
-        && /^\/(?:[a-z]{2}(?:-[a-z]{2})?\/)?translator\/?$/i.test(deeplUrl.pathname)
-        && deeplUrl.hash.endsWith("/qw");
-
-    if (isDeepLTranslator) {
-        getTranslation();
-    }
-
-    else if ($url.startsWith("https://www.qwant.com/")) {
+    if ($url.startsWith("https://www.qwant.com/")) {
 
         //////////////////////////// Creating buttons //////////////////////////////////
 
@@ -111,16 +100,52 @@ function clickGptSiteHandler() {
     clickHandler("https://chat.openai.com/", "https://chat.openai.com/?q=");
 }
 
-function clickTranslateHandler() {
+async function clickTranslateHandler() {
 
-    // if search box is not empty, we translate the input value
-    if ($('input[type="search"]').value) {
-        // we use the qw parameter to know we are coming from the brave search page and to redirect to it after the translation
-        $open("https://www.deepl.com/translator?share=generic#fr/en-us/" + encodeURIComponent($('input[type="search"]').value) + "/qw");
-    }
-    // else we launch the deepl website
-    else {
+    const input = $('input[type="search"]');
+    const text = input && input.value.trim();
+
+    // If the search box is empty, open DeepL normally.
+    if (!text) {
         $open("https://www.deepl.com");
+        return;
+    }
+
+    const extensionApi = globalThis.browser || globalThis.chrome;
+
+    try {
+        // Detect the language locally with the browser's Compact Language Detector.
+        // We only need to distinguish French and English for the DeepL button.
+        let sourceLang = "fr";
+        let targetLang = "en-US";
+
+        if (extensionApi.i18n?.detectLanguage) {
+            const detection = await extensionApi.i18n.detectLanguage(text);
+            const detected = detection?.languages?.[0]?.language?.toLowerCase() || "";
+
+            if (detected.startsWith("en")) {
+                sourceLang = "en";
+                targetLang = "fr";
+            } else if (detected.startsWith("fr")) {
+                sourceLang = "fr";
+                targetLang = "en-US";
+            }
+        }
+
+        const response = await extensionApi.runtime.sendMessage({
+            action: "translateWithDeepL",
+            text,
+            sourceLang,
+            targetLang
+        });
+
+        if (response && response.ok && response.translation) {
+            $open("https://www.qwant.com/?q=" + encodeURIComponent(response.translation));
+        } else {
+            console.error("DeepL translation failed:", response?.error || "unknown error");
+        }
+    } catch (error) {
+        console.error("DeepL translation request failed:", error);
     }
 }
 function clickImageHandler() {
@@ -153,61 +178,6 @@ function createIndicator(text) {
     indicator.className = "indicator";
 
     return indicator;
-}
-
-function getTranslation() {
-    
-    let containerPreTraduction =  $$("[role='textbox']")[0];
-    let containerPostTraduction =  $$("[role='textbox']")[1];
-
-    if (containerPreTraduction != null && containerPostTraduction != null) {
-
-        let previous = "";
-        let traduction = "";
-
-        let previousP = containerPreTraduction.querySelectorAll("p");
-
-        previousP.forEach(element => {
-            previous += element.innerText + " ";
-        });
-
-        let traductionP = containerPostTraduction.querySelectorAll("p");
-
-        traductionP.forEach(element => {
-            traduction += element.innerText + " ";
-        });
-
-
-        previous = normalizeTranslationText(previous);
-        traduction = normalizeTranslationText(traduction);
-
-        if(!traduction.trim()) {
-            setTimeout(function () {
-                getTranslation();
-            }, 100);
-        }
-
-        // DeepL may add a locale prefix (for example /fr/translator), so detect
-        // the reverse pass from its language fragment instead of the page path.
-        else if (traduction.toLocaleLowerCase() === previous.toLocaleLowerCase()
-            && !new URL($url).hash.startsWith("#en/fr-fr/")) {
-            $open("https://www.deepl.com/translator?share=generic#en/fr-fr/" + encodeURIComponent(traduction) + "/qw");
-        }
-        else {
-           $open("https://www.qwant.com/?q=" + encodeURIComponent(traduction));
-        }
-
-
-    }
-    else {
-        setTimeout(function () {
-            getTranslation();
-        }, 100);
-    }
-}
-
-function normalizeTranslationText(text) {
-    return text.normalize("NFC").replace(/\s+/g, " ").trim();
 }
 
 ///////////////////////////////// Listeners ////////////////////////////////////////////////
