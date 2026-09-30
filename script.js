@@ -114,23 +114,10 @@ async function clickTranslateHandler() {
     const extensionApi = globalThis.browser || globalThis.chrome;
 
     try {
-        // Detect the language locally with the browser's Compact Language Detector.
-        // We only need to distinguish French and English for the DeepL button.
-        let sourceLang = "fr";
-        let targetLang = "en-US";
-
-        if (extensionApi.i18n?.detectLanguage) {
-            const detection = await extensionApi.i18n.detectLanguage(text);
-            const detected = detection?.languages?.[0]?.language?.toLowerCase() || "";
-
-            if (detected.startsWith("en")) {
-                sourceLang = "en";
-                targetLang = "fr";
-            } else if (detected.startsWith("fr")) {
-                sourceLang = "fr";
-                targetLang = "en-US";
-            }
-        }
+        // Firefox does not expose i18n.detectLanguage consistently. Use it
+        // when available, then fall back to common French/English words.
+        const sourceLang = await detectFrenchOrEnglish(text, extensionApi);
+        const targetLang = sourceLang === "en" ? "fr" : "en-US";
 
         const response = await extensionApi.runtime.sendMessage({
             action: "translateWithDeepL",
@@ -143,10 +130,43 @@ async function clickTranslateHandler() {
             $open("https://www.qwant.com/?q=" + encodeURIComponent(response.translation));
         } else {
             console.error("DeepL translation failed:", response?.error || "unknown error");
+            alert("La traduction n’a pas abouti. Vérifiez votre connexion puis réessayez.");
         }
     } catch (error) {
         console.error("DeepL translation request failed:", error);
+        alert("La traduction n’a pas abouti. Vérifiez votre connexion puis réessayez.");
     }
+}
+
+async function detectFrenchOrEnglish(text, extensionApi) {
+    if (extensionApi.i18n?.detectLanguage) {
+        try {
+            const detection = await extensionApi.i18n.detectLanguage(text);
+            const best = detection?.languages?.[0];
+            const language = best?.language?.toLowerCase() || "";
+            if ((language.startsWith("en") || language.startsWith("fr")) &&
+                (best.percentage >= 50 || detection.isReliable)) {
+                return language.startsWith("en") ? "en" : "fr";
+            }
+        } catch (error) {
+            console.debug("Built-in language detection unavailable; using local detection.", error);
+        }
+    }
+
+    const normalized = text.toLocaleLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const words = normalized.match(/[a-z]+/g) || [];
+    const frenchWords = new Set("alors au aucun aussi avec ce ces dans de des du elle en et eux il je la le les leur lui ma mais me meme mes moi mon ne nos notre nous on ou par pas pour pourquoi quand que qui sa se ses son sur ta te tes toi ton tous tout tu un une vos votre vous c est sont comment pourquoi ou quand parce donc".split(" "));
+    const englishWords = new Set("a about after again all am an and any are as at be because been before being between both but by can could did do does doing down during each few for from further had has have having he her here hers herself him himself his how i if in into is it its itself just me more most my myself no nor not of off on once only or other our ours ourselves out over own same she should so some such than that the their theirs them themselves then there these they this those through to too under until up very was we were what when where which while who whom why with you your yours yourself yourselves".split(" "));
+    let frenchScore = /[àâçéèêëîïôùûüÿœ]/i.test(text) ? 2 : 0;
+    let englishScore = 0;
+    for (const word of words) {
+        if (frenchWords.has(word)) frenchScore++;
+        if (englishWords.has(word)) englishScore++;
+    }
+
+    if (englishScore > frenchScore) return "en";
+    if (frenchScore > englishScore) return "fr";
+    return navigator.language?.toLowerCase().startsWith("en") ? "en" : "fr";
 }
 function clickImageHandler() {
     if ($('input[type="search"]').value) {
