@@ -37,8 +37,20 @@ window.onload = function () {
                 container.appendChild(button);
             });
 
-            // Keep the original column in place, including when every button is disabled.
-            $("nav").appendChild(container);
+            // Qwant's redesigned sidebar has a settings section at the bottom.
+            // Put our shortcuts immediately before it instead of after it.
+            const nav = $("nav");
+            const settingsLink = nav?.querySelector('a[href*="drawer=settings"]');
+            const settingsSection = settingsLink
+                ? Array.from(nav.children).find(child => child.contains(settingsLink))
+                : null;
+
+            if (settingsSection) {
+                nav.insertBefore(container, settingsSection);
+            } else {
+                // Keep compatibility with Qwant layouts that do not expose this link.
+                nav?.appendChild(container);
+            }
         });
 
         addListeners();

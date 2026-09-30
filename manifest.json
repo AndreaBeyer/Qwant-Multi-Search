@@ -1,6 +1,6 @@
 {
   "name": "Qwant search enhancer",
-  "version": "1.0.19",
+  "version": "1.0.20",
   "description": "Recherche en un clic sur Google et d'autres services depuis Qwant.",
   "manifest_version": 3,
   "permissions": [
