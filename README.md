@@ -143,7 +143,33 @@ zip -r Qwant-search-enhancer.zip Qwant-search-enhancer
 L’extension est également destinée à être distribuée sur le **Chrome Web
 Store**.
 
-👉 [Chrome Web Store](https://chromewebstore.google.com/)
+👉 [Chrome Web Store](https://chromewebstore.google.com/detail/qwant-search-enhancer/kepafadhpgppildfnbkndiebkpojjcgm)
+
+### Télécharger une release Chrome
+
+Les versions prêtes à tester sont disponibles sur la page des releases
+GitHub :
+
+👉 [Voir les releases GitHub](https://github.com/AndreaBeyer/Qwant-search-enhancer/releases)
+
+Dans la release souhaitée, téléchargez le fichier :
+
+```text
+Qwant-search-enhancer-1.0.17-chrome.zip
+```
+
+Décompressez ensuite le fichier ZIP dans un dossier.
+
+Puis :
+
+1. Ouvrez **Chrome** ou **Chromium**.
+2. Rendez-vous sur `chrome://extensions/`.
+3. Activez le **Mode développeur**.
+4. Cliquez sur **Charger l’extension non empaquetée**.
+5. Sélectionnez le dossier décompressé contenant directement `manifest.json`.
+
+> Ne sélectionnez pas le fichier ZIP lui-même.
+> Le dossier sélectionné doit contenir `manifest.json` à sa racine.
 
 ### Installation depuis les sources
 
