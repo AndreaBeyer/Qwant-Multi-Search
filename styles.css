@@ -12,6 +12,14 @@
     pointer-events: none;
 }
 
+.qse-button-container.qse-sidebar-open {
+    visibility: hidden;
+}
+
+.qse-button-container.qse-account-page {
+    visibility: hidden;
+}
+
 .qse-button {
     z-index: 2147483647;
     color: var(--search-text-01);

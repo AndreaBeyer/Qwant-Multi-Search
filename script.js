@@ -45,6 +45,10 @@ function keepButtonsMounted(container) {
     const mount = () => {
         if (!document.body) return;
         if (container.parentElement !== document.body) document.body.appendChild(container);
+        const isAccountPage = window.location.pathname.startsWith("/account/");
+        container.classList.toggle("qse-account-page", isAccountPage);
+        const sidebarIsOpen = Boolean(document.querySelector('nav[tabindex="-1"] a[aria-label="Fermer la barre latérale"]'));
+        container.classList.toggle("qse-sidebar-open", sidebarIsOpen);
         const nav = document.querySelector("nav[tabindex='-1']") || document.querySelector("nav");
         if (nav) {
             const bounds = nav.getBoundingClientRect();
@@ -56,8 +60,22 @@ function keepButtonsMounted(container) {
     // La page Qwant est une application dynamique: après une navigation ou un
     // rendu, elle peut remplacer le body et supprimer les éléments injectés.
     const observer = new MutationObserver(mount);
-    observer.observe(document.documentElement, { childList: true, subtree: true });
+    observer.observe(document.documentElement, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ["aria-label", "class", "href"]
+    });
     window.addEventListener("resize", mount);
+    // Qwant navigue sans recharger le document: suivre aussi les changements
+    // d'URL qui ne déclenchent pas de mutation DOM.
+    let previousPath = window.location.pathname;
+    window.setInterval(() => {
+        if (window.location.pathname !== previousPath) {
+            previousPath = window.location.pathname;
+            mount();
+        }
+    }, 300);
 }
 
 if ($url.startsWith("https://www.qwant.com/")) {
