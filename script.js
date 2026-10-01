@@ -1,59 +1,70 @@
-window.onload = function () {
+function initializeQwantEnhancer() {
+    if (!$url.startsWith("https://www.qwant.com/")) return;
+    if (document.querySelector(".qse-button-container")) return;
 
-    if ($url.startsWith("https://www.qwant.com/")) {
+    const buttonDefinitions = [
+        { id: "google", svg: googleSVG, onClick: clickGoogleHandler, home: "https://www.google.com/" },
+        { id: "wikipedia", svg: wikiSVG, onClick: clickWikiHandler, home: () => "https://" + navigator.language.slice(0, 2) + ".wikipedia.org/" },
+        { id: "youtube", svg: ytbSVG, onClick: clickYtbHandler, home: "https://www.youtube.com/" },
+        { id: "maps", svg: mapSVG, onClick: clickMapHandler, home: "https://www.google.com/maps/" },
+        { id: "news", svg: newsSVG, onClick: clickNewsHandler, home: "https://news.google.com/" },
+        { id: "deepl", svg: deeplSVG, onClick: clickTranslateHandler, home: "https://www.deepl.com/" },
+        { id: "chatgpt", svg: gptSVG, onClick: clickGptSiteHandler, home: "https://chat.openai.com/" }
+    ];
 
-        //////////////////////////// Creating buttons //////////////////////////////////
+    const extensionApi = globalThis.browser || globalThis.chrome;
+    Promise.resolve()
+        .then(() => extensionApi?.storage?.local?.get("enabledButtons"))
+        .catch(() => ({}))
+        .then(({ enabledButtons = {} } = {}) => {
+        const container = $create("div");
+        container.className = "qse-button-container";
+        container.setAttribute("aria-label", "Raccourcis de recherche");
 
-        const buttonDefinitions = [
-            { id: "google", svg: googleSVG, onClick: clickGoogleHandler, home: "https://www.google.com/" },
-            { id: "wikipedia", svg: wikiSVG, onClick: clickWikiHandler, home: () => "https://" + navigator.language.slice(0, 2) + ".wikipedia.org/" },
-            { id: "youtube", svg: ytbSVG, onClick: clickYtbHandler, home: "https://www.youtube.com/" },
-            { id: "maps", svg: mapSVG, onClick: clickMapHandler, home: "https://www.google.com/maps/" },
-            { id: "news", svg: newsSVG, onClick: clickNewsHandler, home: "https://news.google.com/" },
-            { id: "deepl", svg: deeplSVG, onClick: clickTranslateHandler, home: "https://www.deepl.com/" },
-            { id: "chatgpt", svg: gptSVG, onClick: clickGptSiteHandler, home: "https://chat.openai.com/" }
-        ];
-
-        const extensionApi = globalThis.browser || globalThis.chrome;
-        const preferences = extensionApi && extensionApi.storage
-            ? extensionApi.storage.local.get("enabledButtons").catch(() => ({}))
-            : Promise.resolve({});
-
-        preferences.then(({ enabledButtons = {} } = {}) => {
-            const container = $create("div");
-            container.className = "button_container";
-
-            buttonDefinitions.forEach(({ id, svg, onClick, home }) => {
-                // Missing preferences keep the original behavior: every button is enabled.
-                if (enabledButtons[id] === false) return;
-
-                const button = createButton(svg);
-                button.onclick = onClick;
-                button.addEventListener('mousedown', function (e) {
-                    if (e.button === 1) {
-                        $openBlank(typeof home === "function" ? home() : home);
-                    }
-                });
-                container.appendChild(button);
+        buttonDefinitions.forEach(({ id, svg, onClick, home }) => {
+            if (enabledButtons[id] === false) return;
+            const button = createButton(svg);
+            button.onclick = onClick;
+            button.addEventListener("mousedown", function (event) {
+                if (event.button === 1) {
+                    $openBlank(typeof home === "function" ? home() : home);
+                }
             });
-
-            // Qwant's redesigned sidebar has a settings section at the bottom.
-            // Put our shortcuts immediately before it instead of after it.
-            const nav = $("nav");
-            const settingsLink = nav?.querySelector('a[href*="drawer=settings"]');
-            const settingsSection = settingsLink
-                ? Array.from(nav.children).find(child => child.contains(settingsLink))
-                : null;
-
-            if (settingsSection) {
-                nav.insertBefore(container, settingsSection);
-            } else {
-                // Keep compatibility with Qwant layouts that do not expose this link.
-                nav?.appendChild(container);
-            }
+            container.appendChild(button);
         });
 
-        addListeners();
+        // Qwant remplace parfois son contenu pendant le chargement. Garder le
+        // conteneur sous documentElement et le rattacher au body dès qu'il existe.
+        keepButtonsMounted(container);
+    });
+
+    addListeners();
+}
+
+function keepButtonsMounted(container) {
+    const mount = () => {
+        if (!document.body) return;
+        if (container.parentElement !== document.body) document.body.appendChild(container);
+        const nav = document.querySelector("nav[tabindex='-1']") || document.querySelector("nav");
+        if (nav) {
+            const bounds = nav.getBoundingClientRect();
+            container.style.setProperty("left", `${Math.max(0, bounds.left + bounds.width / 2 - 16)}px`);
+        }
+    };
+
+    mount();
+    // La page Qwant est une application dynamique: après une navigation ou un
+    // rendu, elle peut remplacer le body et supprimer les éléments injectés.
+    const observer = new MutationObserver(mount);
+    observer.observe(document.documentElement, { childList: true, subtree: true });
+    window.addEventListener("resize", mount);
+}
+
+if ($url.startsWith("https://www.qwant.com/")) {
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", initializeQwantEnhancer, { once: true });
+    } else {
+        initializeQwantEnhancer();
     }
 }
 
@@ -194,7 +205,7 @@ function clickImageHandler() {
 
 function createButton(svg) {
     const button = $create("a");
-    button.className = "button";
+    button.className = "qse-button";
 
     const svgDocument = new DOMParser().parseFromString(svg, "image/svg+xml");
     if (svgDocument.documentElement.localName === "svg") {
