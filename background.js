@@ -1,6 +1,6 @@
 const DEEPL_URL = "https://oneshot-free.www.deepl.com/v1/storefront/translate";
 
-browserApi = globalThis.browser || globalThis.chrome;
+const browserApi = globalThis.browser || globalThis.chrome;
 
 browserApi.runtime.onMessage.addListener((message) => {
   if (!message || message.action !== "translateWithDeepL") {

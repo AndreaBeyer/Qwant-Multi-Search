@@ -1,15 +1,30 @@
+///////////////////////////////// Selecteurs internes a Qwant ////////////////////////////
+
+// Le DOM de Qwant change régulièrement: ces sélecteurs sont regroupés ici
+// pour réparer rapidement en cas de rupture.
+const SEARCH_INPUT_SELECTOR = 'input[type="search"]';
+const RESULT_SELECTOR = '[data-testid="SERVariant-A"]';
+const SIDEBAR_OPEN_SELECTOR = 'nav[tabindex="-1"] a[aria-label="Fermer la barre latérale"]';
+
+// Valeur de la barre de recherche Qwant, ou "" si elle est absente
+// (ex. pages /account/).
+function getSearchQuery() {
+    const input = $(SEARCH_INPUT_SELECTOR);
+    return input ? input.value : "";
+}
+
 function initializeQwantEnhancer() {
     if (!$url.startsWith("https://www.qwant.com/")) return;
     if (document.querySelector(".qse-button-container")) return;
 
     const buttonDefinitions = [
-        { id: "google", svg: googleSVG, onClick: clickGoogleHandler, home: "https://www.google.com/" },
+        { id: "google", svg: googleSVG, onClick: searchOrOpen("https://www.google.com/search?client=qwant&q=", "https://www.google.com/"), home: "https://www.google.com/" },
         { id: "wikipedia", svg: wikiSVG, onClick: clickWikiHandler, home: () => "https://" + navigator.language.slice(0, 2) + ".wikipedia.org/" },
-        { id: "youtube", svg: ytbSVG, onClick: clickYtbHandler, home: "https://www.youtube.com/" },
-        { id: "maps", svg: mapSVG, onClick: clickMapHandler, home: "https://www.google.com/maps/" },
-        { id: "news", svg: newsSVG, onClick: clickNewsHandler, home: "https://news.google.com/" },
+        { id: "youtube", svg: ytbSVG, onClick: searchOrOpen("https://www.youtube.com/results?search_query=", "https://www.youtube.com/"), home: "https://www.youtube.com/" },
+        { id: "maps", svg: mapSVG, onClick: searchOrOpen("https://www.google.com/maps/search/", "https://www.google.com/maps/"), home: "https://www.google.com/maps/" },
+        { id: "news", svg: newsSVG, onClick: searchOrOpen("https://news.google.com/search?q=", "https://news.google.com/"), home: "https://news.google.com/" },
         { id: "deepl", svg: deeplSVG, onClick: clickTranslateHandler, home: "https://www.deepl.com/" },
-        { id: "chatgpt", svg: gptSVG, onClick: clickGptSiteHandler, home: "https://chat.openai.com/" }
+        { id: "chatgpt", svg: gptSVG, onClick: searchOrOpen("https://chatgpt.com/?q=", "https://chatgpt.com/"), home: "https://chatgpt.com/" }
     ];
 
     const extensionApi = globalThis.browser || globalThis.chrome;
@@ -42,31 +57,55 @@ function initializeQwantEnhancer() {
 }
 
 function keepButtonsMounted(container) {
-    const mount = () => {
+    let mountScheduled = false;
+    let observedNav = null;
+    let navResizeObserver = null;
+
+    const scheduleMount = () => {
+        if (mountScheduled) return;
+        mountScheduled = true;
+        window.requestAnimationFrame(() => {
+            mountScheduled = false;
+            mount();
+        });
+    };
+
+    function mount() {
         if (!document.body) return;
         if (container.parentElement !== document.body) document.body.appendChild(container);
         const isAccountPage = window.location.pathname.startsWith("/account/");
         container.classList.toggle("qse-account-page", isAccountPage);
-        const sidebarIsOpen = Boolean(document.querySelector('nav[tabindex="-1"] a[aria-label="Fermer la barre latérale"]'));
+        const sidebarIsOpen = Boolean(document.querySelector(SIDEBAR_OPEN_SELECTOR));
         container.classList.toggle("qse-sidebar-open", sidebarIsOpen);
         const nav = document.querySelector("nav[tabindex='-1']") || document.querySelector("nav");
         if (nav) {
             const bounds = nav.getBoundingClientRect();
             container.style.setProperty("left", `${Math.max(0, bounds.left + bounds.width / 2 - 16)}px`);
+            if (nav !== observedNav) {
+                navResizeObserver?.disconnect();
+                observedNav = nav;
+                if (typeof ResizeObserver !== "undefined") {
+                    navResizeObserver = new ResizeObserver(scheduleMount);
+                    navResizeObserver.observe(nav);
+                }
+            }
         }
-    };
+    }
 
     mount();
+
     // La page Qwant est une application dynamique: après une navigation ou un
     // rendu, elle peut remplacer le body et supprimer les éléments injectés.
-    const observer = new MutationObserver(mount);
+    // Les mutations peuvent être très nombreuses: regrouper les appels à
+    // mount() sur une seule image pour éviter les reflows en rafale.
+    const observer = new MutationObserver(scheduleMount);
     observer.observe(document.documentElement, {
         childList: true,
         subtree: true,
         attributes: true,
         attributeFilter: ["aria-label", "class", "href"]
     });
-    window.addEventListener("resize", mount);
+    window.addEventListener("resize", scheduleMount);
     // Qwant navigue sans recharger le document: suivre aussi les changements
     // d'URL qui ne déclenchent pas de mutation DOM.
     let previousPath = window.location.pathname;
@@ -88,63 +127,26 @@ if ($url.startsWith("https://www.qwant.com/")) {
 
 ///////////////////////////////// ClickHandlers ////////////////////////////////////////
 
-function clickHandler(default_search_url, search_url) {
-
-    // if search box is not empty, we search for the input value
-    if ($('input[type="search"]').value) {
-        $open(search_url + encodeURIComponent($('input[type="search"]').value));
-    }
-    // else we launch a default url
-    else {
-        $open(default_search_url);
-    }
-}
-
-function clickGoogleHandler() {
-    // if search box is not empty, we search for the input value
-    if ($('input[type="search"]').value) {
-        $open("https://www.google.com/search?client=qwant&q=" + encodeURIComponent($('input[type="search"]').value));
-    }
-    // else we launch a default url
-    else {
-        $open("https://www.google.com/");
-    }
+// Ouvre la recherche sur le service avec la requête de la barre Qwant si elle
+// contient du texte, sinon le site lui-même.
+function searchOrOpen(searchUrl, defaultUrl) {
+    return () => {
+        const query = getSearchQuery();
+        $open(query ? searchUrl + encodeURIComponent(query) : defaultUrl);
+    };
 }
 
 function clickWikiHandler() {
     // get wiki version from browser language
-    const wiki_version = navigator.language.slice(0, 2);
-    // if search box is not empty, we search for the input value
-    if ($('input[type="search"]').value) {
-        $open("https://" + wiki_version + ".wikipedia.org/w/index.php?sort=relevance&search=" + encodeURIComponent($('input[type="search"]').value));
-    }
-    // else we launch a default url
-    else {
-        $open("https://" + wiki_version + ".wikipedia.org/");
-    }
-
-}
-
-function clickYtbHandler() {
-    clickHandler("https://www.youtube.com/", "https://www.youtube.com/results?search_query=");
-}
-
-function clickMapHandler() {
-    clickHandler("https://www.google.com/maps/", "https://www.google.com/maps/search/");
-}
-
-function clickNewsHandler() {
-    clickHandler("https://news.google.com/", "https://news.google.com/search?q=");
-}
-
-function clickGptSiteHandler() {
-    clickHandler("https://chat.openai.com/", "https://chat.openai.com/?q=");
+    const wikiLang = navigator.language.slice(0, 2);
+    const query = getSearchQuery();
+    $open(query
+        ? "https://" + wikiLang + ".wikipedia.org/w/index.php?sort=relevance&search=" + encodeURIComponent(query)
+        : "https://" + wikiLang + ".wikipedia.org/");
 }
 
 async function clickTranslateHandler() {
-
-    const input = $('input[type="search"]');
-    const text = input && input.value.trim();
+    const text = getSearchQuery().trim();
 
     // If the search box is empty, open DeepL normally.
     if (!text) {
@@ -171,11 +173,11 @@ async function clickTranslateHandler() {
             $open("https://www.qwant.com/?q=" + encodeURIComponent(response.translation));
         } else {
             console.error("DeepL translation failed:", response?.error || "unknown error");
-            alert("La traduction n’a pas abouti. Vérifiez votre connexion puis réessayez.");
+            $alert("La traduction n’a pas abouti. Vérifiez votre connexion puis réessayez.");
         }
     } catch (error) {
         console.error("DeepL translation request failed:", error);
-        alert("La traduction n’a pas abouti. Vérifiez votre connexion puis réessayez.");
+        $alert("La traduction n’a pas abouti. Vérifiez votre connexion puis réessayez.");
     }
 }
 
@@ -209,15 +211,6 @@ async function detectFrenchOrEnglish(text, extensionApi) {
     if (frenchScore > englishScore) return "fr";
     return navigator.language?.toLowerCase().startsWith("en") ? "en" : "fr";
 }
-function clickImageHandler() {
-    if ($('input[type="search"]').value) {
-        $open("https://search.brave.com/images?q=" + encodeURIComponent($('input[type="search"]').value) + "+%21gi&source=web");
-    }
-    else {
-        $open("https://www.google.com");
-    }
-}
-
 
 ///////////////////////////////// Functions ////////////////////////////////////////////////
 
@@ -233,92 +226,42 @@ function createButton(svg) {
     return button;
 }
 
-function createIndicator(text) {
-    var indicator = $create("span");
-    indicator.textContent = text;
-    indicator.className = "indicator";
-
-    return indicator;
-}
-
 ///////////////////////////////// Listeners ////////////////////////////////////////////////
 
 function addListeners() {
+    let currentFocus = -1;
 
-    var currentFocus = -1;
+    const focusResult = (results, index) => {
+        // Le 4e lien d'un résultat est le lien principal.
+        const link = results[index]?.getElementsByTagName("a")[3];
+        if (!link) return false;
+        link.focus();
+        link.scrollIntoView({ behavior: "smooth", block: "center" });
+        return true;
+    };
 
-    document.addEventListener('keydown', function (e) {
+    document.addEventListener("keydown", (event) => {
+        if (document.activeElement === $(SEARCH_INPUT_SELECTOR)) return;
 
-        if (document.activeElement == $('input[type="search"]')) {
+        if (event.key === "/") {
+            $(SEARCH_INPUT_SELECTOR)?.focus();
+            event.preventDefault();
             return;
         }
 
-        if (e.key === '/') {
-            $('input[type="search"]').focus();
-            e.preventDefault();
-        }
+        if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
+        event.preventDefault();
 
-        // AROWN DOWN
-        else if (e.key === 'ArrowDown') {
+        const results = $$(RESULT_SELECTOR);
+        if (results.length === 0) return;
 
-            if (document.activeElement == $('input[type="search"]')) {
-                return;
-            }
+        // ArrowUp sur le premier résultat ne fait rien; ArrowDown/ArrowUp
+        // depuis aucun résultat sélectionné ciblent le premier.
+        const nextIndex = event.key === "ArrowDown"
+            ? currentFocus + 1
+            : (currentFocus < 0 ? 0 : currentFocus - 1);
+        if (nextIndex < 0) return;
 
-            e.preventDefault();
-            // if the first result is not focused, we focus it
-            // else we focus the next result
-            if (currentFocus < 0) {
-                let result = $$('[data-testid="SERVariant-A"]')[0];
-                if (result) {
-                    let link = result.getElementsByTagName('a')[3];
-                    currentFocus = 0;
-                    link.focus();
-                    link.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }
-            }
-
-            else {
-                let result = $$('[data-testid="SERVariant-A"]')[currentFocus + 1];
-                if (result) {
-                    let link = result.getElementsByTagName('a')[3];
-                    currentFocus = currentFocus + 1;
-                    link.focus();
-                    link.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }
-            }
-        }
-    });
-
-    // AROWN UP
-    document.addEventListener('keydown', function (e) {
-
-        if (document.activeElement == $('input[type="search"]')) {
-            return;
-        }
-
-        if (e.key === 'ArrowUp') {
-            e.preventDefault();
-
-            if (currentFocus < 0) {
-                let result = $$('[data-testid="SERVariant-A"]')[0];
-                if (result) {
-                    let link = result.getElementsByTagName('a')[3];
-                    currentFocus = 0;
-                    link.focus();
-                    link.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }
-            }
-            else {
-                let result = $$('[data-testid="SERVariant-A"]')[currentFocus - 1];
-                if (result) {
-                    let link = result.getElementsByTagName('a')[3];
-                    currentFocus = currentFocus - 1;
-                    link.focus();
-                    link.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }
-            }
-
-        }
+        if (focusResult(results, nextIndex)) currentFocus = nextIndex;
     });
 }
