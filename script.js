@@ -13,18 +13,55 @@ function getSearchQuery() {
     return input ? input.value : "";
 }
 
-function initializeQwantEnhancer() {
+// Cache des SVG chargés depuis les fichiers
+const svgCache = new Map();
+
+// Charge un SVG depuis un fichier et le met en cache
+async function loadSVG(id) {
+    if (svgCache.has(id)) {
+        return svgCache.get(id);
+    }
+
+    const extensionApi = globalThis.browser || globalThis.chrome;
+    const url = extensionApi.runtime.getURL(`svgs/${id}.svg`);
+    
+    try {
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`Failed to load SVG: ${response.status}`);
+        }
+        const svgContent = await response.text();
+        svgCache.set(id, svgContent);
+        return svgContent;
+    } catch (error) {
+        console.error(`Erreur de chargement du SVG ${id}:`, error);
+        // Retourner un SVG vide en cas d'erreur
+        return '<svg xmlns="http://www.w3.org/2000/svg" height="1.8em" width="1.8em"></svg>';
+    }
+}
+
+// Charge tous les SVG nécessaires
+async function loadAllSVGs() {
+    const svgIds = ['google', 'wiki', 'ytb', 'map', 'news', 'deepl', 'gpt'];
+    const promises = svgIds.map(id => loadSVG(id));
+    await Promise.all(promises);
+}
+
+async function initializeQwantEnhancer() {
     if (!$url.startsWith("https://www.qwant.com/")) return;
     if (document.querySelector(".qse-button-container")) return;
 
+    // Charger tous les SVG avant de créer les boutons
+    await loadAllSVGs();
+
     const buttonDefinitions = [
-        { id: "google", svg: googleSVG, onClick: searchOrOpen("https://www.google.com/search?client=qwant&q=", "https://www.google.com/"), home: "https://www.google.com/" },
-        { id: "wikipedia", svg: wikiSVG, onClick: clickWikiHandler, home: () => "https://" + navigator.language.slice(0, 2) + ".wikipedia.org/" },
-        { id: "youtube", svg: ytbSVG, onClick: searchOrOpen("https://www.youtube.com/results?search_query=", "https://www.youtube.com/"), home: "https://www.youtube.com/" },
-        { id: "maps", svg: mapSVG, onClick: searchOrOpen("https://www.google.com/maps/search/", "https://www.google.com/maps/"), home: "https://www.google.com/maps/" },
-        { id: "news", svg: newsSVG, onClick: searchOrOpen("https://news.google.com/search?q=", "https://news.google.com/"), home: "https://news.google.com/" },
-        { id: "deepl", svg: deeplSVG, onClick: clickTranslateHandler, home: "https://www.deepl.com/" },
-        { id: "chatgpt", svg: gptSVG, onClick: searchOrOpen("https://chatgpt.com/?q=", "https://chatgpt.com/"), home: "https://chatgpt.com/" }
+        { id: "google", svg: svgCache.get('google'), onClick: searchOrOpen("https://www.google.com/search?client=qwant&q=", "https://www.google.com/"), home: "https://www.google.com/" },
+        { id: "wikipedia", svg: svgCache.get('wiki'), onClick: clickWikiHandler, home: () => "https://" + navigator.language.slice(0, 2) + ".wikipedia.org/" },
+        { id: "youtube", svg: svgCache.get('ytb'), onClick: searchOrOpen("https://www.youtube.com/results?search_query=", "https://www.youtube.com/"), home: "https://www.youtube.com/" },
+        { id: "maps", svg: svgCache.get('map'), onClick: searchOrOpen("https://www.google.com/maps/search/", "https://www.google.com/maps/"), home: "https://www.google.com/maps/" },
+        { id: "news", svg: svgCache.get('news'), onClick: searchOrOpen("https://news.google.com/search?q=", "https://news.google.com/"), home: "https://news.google.com/" },
+        { id: "deepl", svg: svgCache.get('deepl'), onClick: clickTranslateHandler, home: "https://www.deepl.com/" },
+        { id: "chatgpt", svg: svgCache.get('gpt'), onClick: searchOrOpen("https://chatgpt.com/?q=", "https://chatgpt.com/"), home: "https://chatgpt.com/" }
     ];
 
     const extensionApi = globalThis.browser || globalThis.chrome;
