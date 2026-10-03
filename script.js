@@ -5,6 +5,10 @@
 const SEARCH_INPUT_SELECTOR = 'input[type="search"]';
 const RESULT_SELECTOR = '[data-testid="SERVariant-A"]';
 const SIDEBAR_OPEN_SELECTOR = 'nav[tabindex="-1"] a[aria-label="Fermer la barre latérale"]';
+const extensionApi = globalThis.browser || globalThis.chrome;
+const message = (key) => extensionApi.i18n.getMessage(key);
+const browserLanguage = (extensionApi.i18n?.getUILanguage?.() || navigator.language || "").toLowerCase();
+const deeplEnabledByDefault = browserLanguage.startsWith("fr") || browserLanguage.startsWith("en");
 
 // Valeur de la barre de recherche Qwant, ou "" si elle est absente
 // (ex. pages /account/).
@@ -22,7 +26,6 @@ async function loadSVG(id) {
         return svgCache.get(id);
     }
 
-    const extensionApi = globalThis.browser || globalThis.chrome;
     const url = extensionApi.runtime.getURL(`svgs/${id}.svg`);
     
     try {
@@ -55,27 +58,29 @@ async function initializeQwantEnhancer() {
     await loadAllSVGs();
 
     const buttonDefinitions = [
-        { id: "google", svg: svgCache.get('google'), onClick: searchOrOpen("https://www.google.com/search?client=qwant&q=", "https://www.google.com/"), home: "https://www.google.com/" },
-        { id: "wikipedia", svg: svgCache.get('wiki'), onClick: clickWikiHandler, home: () => "https://" + navigator.language.slice(0, 2) + ".wikipedia.org/" },
-        { id: "youtube", svg: svgCache.get('ytb'), onClick: searchOrOpen("https://www.youtube.com/results?search_query=", "https://www.youtube.com/"), home: "https://www.youtube.com/" },
-        { id: "maps", svg: svgCache.get('map'), onClick: searchOrOpen("https://www.google.com/maps/search/", "https://www.google.com/maps/"), home: "https://www.google.com/maps/" },
-        { id: "news", svg: svgCache.get('news'), onClick: searchOrOpen("https://news.google.com/search?q=", "https://news.google.com/"), home: "https://news.google.com/" },
-        { id: "deepl", svg: svgCache.get('deepl'), onClick: clickTranslateHandler, home: "https://www.deepl.com/" },
-        { id: "chatgpt", svg: svgCache.get('gpt'), onClick: searchOrOpen("https://chatgpt.com/?q=", "https://chatgpt.com/"), home: "https://chatgpt.com/" }
+        { id: "google", label: "google", svg: svgCache.get('google'), onClick: searchOrOpen("https://www.google.com/search?client=qwant&q=", "https://www.google.com/"), home: "https://www.google.com/" },
+        { id: "wikipedia", label: "wikipedia", svg: svgCache.get('wiki'), onClick: clickWikiHandler, home: () => "https://" + navigator.language.slice(0, 2) + ".wikipedia.org/" },
+        { id: "youtube", label: "youtube", svg: svgCache.get('ytb'), onClick: searchOrOpen("https://www.youtube.com/results?search_query=", "https://www.youtube.com/"), home: "https://www.youtube.com/" },
+        { id: "maps", label: "googleMaps", svg: svgCache.get('map'), onClick: searchOrOpen("https://www.google.com/maps/search/", "https://www.google.com/maps/"), home: "https://www.google.com/maps/" },
+        { id: "news", label: "googleNews", svg: svgCache.get('news'), onClick: searchOrOpen("https://news.google.com/search?q=", "https://news.google.com/"), home: "https://news.google.com/" },
+        { id: "deepl", label: "deepl", svg: svgCache.get('deepl'), onClick: clickTranslateHandler, home: "https://www.deepl.com/" },
+        { id: "chatgpt", label: "chatgpt", svg: svgCache.get('gpt'), onClick: searchOrOpen("https://chatgpt.com/?q=", "https://chatgpt.com/"), home: "https://chatgpt.com/" }
     ];
 
-    const extensionApi = globalThis.browser || globalThis.chrome;
     Promise.resolve()
         .then(() => extensionApi?.storage?.local?.get("enabledButtons"))
         .catch(() => ({}))
         .then(({ enabledButtons = {} } = {}) => {
         const container = $create("div");
         container.className = "qse-button-container";
-        container.setAttribute("aria-label", "Raccourcis de recherche");
+        container.setAttribute("aria-label", message("searchShortcuts"));
 
-        buttonDefinitions.forEach(({ id, svg, onClick, home }) => {
+        buttonDefinitions.forEach(({ id, label, svg, onClick, home }) => {
+            if (id === "deepl" && enabledButtons[id] === undefined && !deeplEnabledByDefault) return;
             if (enabledButtons[id] === false) return;
             const button = createButton(svg);
+            button.setAttribute("aria-label", message(label));
+            button.title = message(label);
             button.onclick = onClick;
             button.addEventListener("mousedown", function (event) {
                 if (event.button === 1) {
@@ -210,11 +215,11 @@ async function clickTranslateHandler() {
             $open("https://www.qwant.com/?q=" + encodeURIComponent(response.translation));
         } else {
             console.error("DeepL translation failed:", response?.error || "unknown error");
-            $alert("La traduction n’a pas abouti. Vérifiez votre connexion puis réessayez.");
+            $alert(message("translationError"));
         }
     } catch (error) {
         console.error("DeepL translation request failed:", error);
-        $alert("La traduction n’a pas abouti. Vérifiez votre connexion puis réessayez.");
+        $alert(message("translationError"));
     }
 }
 

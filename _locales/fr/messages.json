@@ -1,0 +1,53 @@
+{
+  "extensionName": {
+    "message": "Qwant search enhancer"
+  },
+  "extensionDescription": {
+    "message": "Recherchez sur Google, ChatGPT et d’autres services en un clic depuis Qwant."
+  },
+  "actionTitle": {
+    "message": "Boutons de recherche Qwant"
+  },
+  "optionsTitle": {
+    "message": "Qwant search enhancer — Options"
+  },
+  "settingsIntro": {
+    "message": "Choisissez les boutons à afficher. Les changements sont enregistrés automatiquement."
+  },
+  "wikipedia": {
+    "message": "Wikipédia"
+  },
+  "googleNews": {
+    "message": "Google Actualités"
+  },
+  "reloadHint": {
+    "message": "Rechargez Qwant pour appliquer les changements."
+  },
+  "savedStatus": {
+    "message": "Enregistré."
+  },
+  "saveError": {
+    "message": "Impossible d’enregistrer les préférences."
+  },
+  "google": {
+    "message": "Google"
+  },
+  "youtube": {
+    "message": "YouTube"
+  },
+  "googleMaps": {
+    "message": "Google Maps"
+  },
+  "deepl": {
+    "message": "DeepL (fr/en)"
+  },
+  "chatgpt": {
+    "message": "ChatGPT"
+  },
+  "searchShortcuts": {
+    "message": "Raccourcis de recherche"
+  },
+  "translationError": {
+    "message": "La traduction n’a pas abouti. Vérifiez votre connexion puis réessayez."
+  }
+}

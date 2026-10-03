@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="fr">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -10,16 +10,16 @@
 <body>
   <main>
     <h1>Qwant search enhancer</h1>
-    <p>Choisissez les boutons à afficher. Les changements sont enregistrés automatiquement.</p>
+    <p data-i18n="settingsIntro">Choose which buttons to show. Changes are saved automatically.</p>
     <form id="settings">
       <label><input type="checkbox" name="google"> Google</label>
-      <label><input type="checkbox" name="wikipedia"> Wikipédia</label>
+      <label><input type="checkbox" name="wikipedia"> <span data-i18n="wikipedia">Wikipedia</span></label>
       <label><input type="checkbox" name="youtube"> YouTube</label>
       <label><input type="checkbox" name="maps"> Google Maps</label>
-      <label><input type="checkbox" name="news"> Google Actualités</label>
-      <label><input type="checkbox" name="deepl"> DeepL</label>
+      <label><input type="checkbox" name="news"> <span data-i18n="googleNews">Google News</span></label>
+      <label><input type="checkbox" name="deepl"> <span data-i18n="deepl">DeepL (fr/en)</span></label>
       <label><input type="checkbox" name="chatgpt"> ChatGPT</label>
-      <p class="hint">Rechargez Qwant pour appliquer les changements.</p>
+      <p class="hint" data-i18n="reloadHint">Reload Qwant to apply your changes.</p>
       <span id="status" role="status" aria-live="polite"></span>
     </form>
   </main>

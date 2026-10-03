@@ -69,55 +69,7 @@ Puis :
 
 ### ⚠️ Linux avec Firefox Flatpak
 
-Si Firefox est installé avec **Flatpak** et que le chargement direct du
-`manifest.json` ne fonctionne pas, vous pouvez autoriser Firefox à
-accéder au dossier du projet.
-
-Dans un terminal :
-
-``` bash
-flatpak override --user \
-  --filesystem="$HOME/Documents/GitHub/Qwant search enhancer" \
-  org.mozilla.firefox
-```
-
-Fermez ensuite complètement Firefox :
-
-``` bash
-pkill firefox
-```
-
-Relancez Firefox puis retournez dans :
-
-``` text
-about:debugging
-```
-
-Choisissez :
-
-**Ce Firefox → Charger un module complémentaire temporaire…**
-
-et sélectionnez :
-
-``` text
-/home/andrea/Documents/GitHub/Qwant search enhancer/Qwant-search-enhancer/manifest.json
-```
-
-Vous pouvez vérifier que l’autorisation Flatpak est bien active avec :
-
-``` bash
-flatpak override --user --show org.mozilla.firefox
-```
-
-Vous devriez voir le dossier autorisé dans la configuration du sandbox.
-
-> Cette procédure concerne uniquement les installations Firefox
-> utilisant Flatpak. Si Firefox n’est pas installé avec Flatpak, cette
-> étape n’est pas nécessaire.
-
-### Solution alternative sous Firefox Flatpak
-
-Si le chargement direct du `manifest.json` continue de poser problème,
+Si le chargement direct du `manifest.json` pose problème,
 vous pouvez charger le fichier ZIP de l’extension :
 
 1.  Créez le ZIP depuis le dossier du projet :
@@ -143,7 +95,7 @@ zip -r Qwant-search-enhancer.zip Qwant-search-enhancer
 L’extension est également destinée à être distribuée sur le **Chrome Web
 Store**.
 
-👉 [Chrome Web Store](https://chromewebstore.google.com/)
+👉 [Chrome Web Store](https://chromewebstore.google.com/detail/qwant-search-enhancer/kepafadhpgppildfnbkndiebkpojjcgm)
 
 ### Installation depuis les sources
 

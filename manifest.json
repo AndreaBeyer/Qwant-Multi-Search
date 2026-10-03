@@ -1,8 +1,9 @@
 {
-  "name": "Qwant search enhancer",
-  "version": "1.0.34",
+  "name": "__MSG_extensionName__",
+  "default_locale": "en",
+  "version": "1.0.37",
   "author": "Andréa Beyer",
-  "description": "Recherche en un clic sur Google, ChatGPT et d'autres services depuis Qwant.",
+  "description": "__MSG_extensionDescription__",
   "manifest_version": 3,
   "permissions": [
     "storage"
@@ -22,7 +23,7 @@
     "open_in_tab": true
   },
   "action": {
-    "default_title": "Boutons de recherche Qwant",
+    "default_title": "__MSG_actionTitle__",
     "default_popup": "popup.html",
     "default_icon": {
       "16": "images/action16.png",
@@ -35,7 +36,7 @@
       "id": "qwant-search-enhancer@andreabeyer.fr",
       "data_collection_permissions": {
         "required": [
-          "none"
+          "searchTerms"
         ],
         "optional": []
       }
