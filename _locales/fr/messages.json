@@ -1,6 +1,6 @@
 {
   "extensionName": {
-    "message": "Qwant search enhancer"
+    "message": "Qwant Multi-Search"
   },
   "extensionDescription": {
     "message": "Recherchez sur Google, ChatGPT et d’autres services en un clic depuis Qwant."
@@ -9,7 +9,7 @@
     "message": "Boutons de recherche Qwant"
   },
   "optionsTitle": {
-    "message": "Qwant search enhancer — Options"
+    "message": "Qwant Multi-Search — Options"
   },
   "settingsIntro": {
     "message": "Choisissez les boutons à afficher. Les changements sont enregistrés automatiquement."

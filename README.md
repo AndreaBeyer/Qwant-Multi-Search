@@ -1,6 +1,6 @@
-# Qwant Search Enhancer
+# Qwant Multi-Search
 
-**Qwant Search Enhancer** est une extension de navigateur compatible
+**Qwant Multi-Search** est une extension de navigateur compatible
 avec **Firefox, Firefox ESR, Chrome et Chromium** qui permet d’effectuer
 une recherche en un clic sur **Google, ChatGPT et d’autres services**,
 directement depuis Qwant.
@@ -75,7 +75,7 @@ vous pouvez charger le fichier ZIP de l’extension :
 1.  Créez le ZIP depuis le dossier du projet :
 
 ``` bash
-cd "$HOME/Documents/GitHub/Qwant search enhancer"
+cd "$HOME/Documents/GitHub/Qwant Multi-Search"
 zip -r Qwant-search-enhancer.zip Qwant-search-enhancer
 ```
 
@@ -116,7 +116,7 @@ Puis :
 
 ## 🔒 Confidentialité
 
-Qwant Search Enhancer est conçu pour respecter la vie privée de ses
+Qwant Multi-Search est conçu pour respecter la vie privée de ses
 utilisateurs.
 
 L’extension ne collecte pas et ne transmet pas de données personnelles à
@@ -151,7 +151,7 @@ Ce projet est distribué sous licence **MIT**.
 
 ------------------------------------------------------------------------
 
-⭐ Si Qwant Search Enhancer vous est utile, n’hésitez pas à mettre une
+⭐ Si Qwant Multi-Search vous est utile, n’hésitez pas à mettre une
 étoile au projet !
 
 **Made with ❤️ for Firefox, Chrome, Chromium and Qwant**
