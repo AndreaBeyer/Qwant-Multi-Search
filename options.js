@@ -7,13 +7,48 @@ const buttonIds = Array.from(form.elements)
 
 const uiLanguage = extensionApi.i18n?.getUILanguage?.() || navigator.language || "en";
 const normalizedUiLanguage = uiLanguage.toLowerCase();
-const language = normalizedUiLanguage.startsWith("fr") ? "fr" : "en";
-const deeplEnabledByDefault = normalizedUiLanguage.startsWith("fr") || normalizedUiLanguage.startsWith("en");
+const language = normalizedUiLanguage.startsWith("fr") ? "fr" : normalizedUiLanguage.startsWith("de") ? "de" : "en";
+const deeplPair = normalizedUiLanguage.startsWith("de") ? "de/en" : "fr/en";
+const deeplEnabledByDefault = normalizedUiLanguage.startsWith("fr") || normalizedUiLanguage.startsWith("en") || normalizedUiLanguage.startsWith("de");
+const messages = {
+  en: {
+    optionsTitle: "Qwant Multi-Search — Options",
+    settingsIntro: "Choose which buttons to show. Changes are saved automatically.",
+    wikipedia: "Wikipedia",
+    googleNews: "Google News",
+    deepl: "DeepL (fr/en)",
+    reloadHint: "Reload Qwant to apply your changes.",
+    savedStatus: "Saved.",
+    saveError: "Could not save your preferences."
+  },
+  fr: {
+    optionsTitle: "Qwant Multi-Search — Options",
+    settingsIntro: "Choisissez les boutons à afficher. Les changements sont enregistrés automatiquement.",
+    wikipedia: "Wikipédia",
+    googleNews: "Google Actualités",
+    deepl: "DeepL (fr/en)",
+    reloadHint: "Rechargez Qwant pour appliquer les changements.",
+    savedStatus: "Enregistré.",
+    saveError: "Impossible d’enregistrer les préférences."
+  },
+  de: {
+    optionsTitle: "Qwant Multi-Search — Einstellungen",
+    settingsIntro: "Wähle die Schaltflächen aus, die angezeigt werden sollen. Änderungen werden automatisch gespeichert.",
+    wikipedia: "Wikipedia",
+    googleNews: "Google News",
+    deepl: "DeepL (fr/en)",
+    reloadHint: "Lade Qwant neu, um deine Änderungen anzuwenden.",
+    savedStatus: "Gespeichert.",
+    saveError: "Deine Einstellungen konnten nicht gespeichert werden."
+  }
+};
+const message = (key) => key === "deepl" ? `DeepL (${deeplPair})` : messages[language][key] || messages.en[key] || key;
+
 document.documentElement.lang = language;
 document.querySelectorAll("[data-i18n]").forEach((element) => {
-  element.textContent = extensionApi.i18n.getMessage(element.dataset.i18n);
+  element.textContent = message(element.dataset.i18n);
 });
-document.title = extensionApi.i18n.getMessage("optionsTitle");
+document.title = message("optionsTitle");
 
 extensionApi.storage.local.get("enabledButtons").then(({ enabledButtons = {} } = {}) => {
   buttonIds.forEach((id) => {
@@ -34,8 +69,8 @@ form.addEventListener("change", () => {
   );
 
   extensionApi.storage.local.set({ enabledButtons }).then(() => {
-    status.textContent = extensionApi.i18n.getMessage("savedStatus");
+    status.textContent = message("savedStatus");
   }).catch(() => {
-    status.textContent = extensionApi.i18n.getMessage("saveError");
+    status.textContent = message("saveError");
   });
 });

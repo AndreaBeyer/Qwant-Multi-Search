@@ -13,12 +13,12 @@ directement depuis Qwant.
 - ⚡ Recherche rapide en un seul clic
 - 🦊 Compatible avec **Firefox et Firefox ESR**
 - 🌐 Compatible avec **Chrome et Chromium**
+- 🇩🇪 Interface allemande et traduction DeepL entre l’allemand et l’anglais
 - 🔒 Aucune collecte de données personnelles par l’extension
 
 ## 🚀 Comment ça fonctionne ?
 
-Lorsque vous effectuez une recherche sur Qwant, **Qwant Search
-Enhancer** ajoute des possibilités pour utiliser la même requête sur
+Lorsque vous effectuez une recherche sur Qwant, **Qwant Multi-Search** ajoute des possibilités pour utiliser la même requête sur
 d’autres services.
 
 Cela évite de devoir :

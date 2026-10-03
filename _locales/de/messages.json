@@ -1,0 +1,53 @@
+{
+  "extensionName": {
+    "message": "Qwant Multi-Search"
+  },
+  "extensionDescription": {
+    "message": "Suche mit einem Klick von Qwant aus auf Google, ChatGPT und anderen Diensten."
+  },
+  "actionTitle": {
+    "message": "Qwant-Suchschaltflächen"
+  },
+  "optionsTitle": {
+    "message": "Qwant Multi-Search — Einstellungen"
+  },
+  "settingsIntro": {
+    "message": "Wähle die Schaltflächen aus, die angezeigt werden sollen. Änderungen werden automatisch gespeichert."
+  },
+  "wikipedia": {
+    "message": "Wikipedia"
+  },
+  "googleNews": {
+    "message": "Google News"
+  },
+  "reloadHint": {
+    "message": "Lade Qwant neu, um deine Änderungen anzuwenden."
+  },
+  "savedStatus": {
+    "message": "Gespeichert."
+  },
+  "saveError": {
+    "message": "Deine Einstellungen konnten nicht gespeichert werden."
+  },
+  "google": {
+    "message": "Google"
+  },
+  "youtube": {
+    "message": "YouTube"
+  },
+  "googleMaps": {
+    "message": "Google Maps"
+  },
+  "deepl": {
+    "message": "DeepL (de/en)"
+  },
+  "chatgpt": {
+    "message": "ChatGPT"
+  },
+  "searchShortcuts": {
+    "message": "Suchverknüpfungen"
+  },
+  "translationError": {
+    "message": "Die Übersetzung ist fehlgeschlagen. Prüfe deine Verbindung und versuche es erneut."
+  }
+}

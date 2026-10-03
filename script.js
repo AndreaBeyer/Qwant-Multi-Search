@@ -6,9 +6,46 @@ const SEARCH_INPUT_SELECTOR = 'input[type="search"]';
 const RESULT_SELECTOR = '[data-testid="SERVariant-A"]';
 const SIDEBAR_TOGGLE_SELECTOR = 'nav[tabindex="-1"] a[role="button"][href]';
 const extensionApi = globalThis.browser || globalThis.chrome;
-const message = (key) => extensionApi.i18n.getMessage(key);
 const browserLanguage = (extensionApi.i18n?.getUILanguage?.() || navigator.language || "").toLowerCase();
-const deeplEnabledByDefault = browserLanguage.startsWith("fr") || browserLanguage.startsWith("en");
+const messageLanguage = browserLanguage.startsWith("fr") ? "fr" : browserLanguage.startsWith("de") ? "de" : "en";
+const deeplPair = browserLanguage.startsWith("de") ? "de/en" : "fr/en";
+const messageCatalog = {
+    en: {
+        google: "Google",
+        wikipedia: "Wikipedia",
+        youtube: "YouTube",
+        googleMaps: "Google Maps",
+        googleNews: "Google News",
+        deepl: "DeepL (fr/en)",
+        chatgpt: "ChatGPT",
+        searchShortcuts: "Search shortcuts",
+        translationError: "Translation failed. Check your connection and try again."
+    },
+    fr: {
+        google: "Google",
+        wikipedia: "Wikipédia",
+        youtube: "YouTube",
+        googleMaps: "Google Maps",
+        googleNews: "Google Actualités",
+        deepl: "DeepL (fr/en)",
+        chatgpt: "ChatGPT",
+        searchShortcuts: "Raccourcis de recherche",
+        translationError: "La traduction n’a pas abouti. Vérifiez votre connexion puis réessayez."
+    },
+    de: {
+        google: "Google",
+        wikipedia: "Wikipedia",
+        youtube: "YouTube",
+        googleMaps: "Google Maps",
+        googleNews: "Google News",
+        deepl: "DeepL (fr/en)",
+        chatgpt: "ChatGPT",
+        searchShortcuts: "Suchverknüpfungen",
+        translationError: "Die Übersetzung ist fehlgeschlagen. Prüfe deine Verbindung und versuche es erneut."
+    }
+};
+const message = (key) => key === "deepl" ? `DeepL (${deeplPair})` : messageCatalog[messageLanguage][key] || key;
+const deeplEnabledByDefault = browserLanguage.startsWith("fr") || browserLanguage.startsWith("en") || browserLanguage.startsWith("de");
 
 // Valeur de la barre de recherche Qwant, ou "" si elle est absente
 // (ex. pages /account/).
@@ -206,8 +243,8 @@ async function clickTranslateHandler() {
     try {
         // Firefox does not expose i18n.detectLanguage consistently. Use it
         // when available, then fall back to common French/English words.
-        const sourceLang = await detectFrenchOrEnglish(text, extensionApi);
-        const targetLang = sourceLang === "en" ? "fr" : "en-US";
+        const sourceLang = await detectGermanFrenchOrEnglish(text, extensionApi);
+        const targetLang = browserLanguage.startsWith("de") ? "de" : "fr";
 
         const response = await extensionApi.runtime.sendMessage({
             action: "translateWithDeepL",
@@ -228,37 +265,44 @@ async function clickTranslateHandler() {
     }
 }
 
-async function detectFrenchOrEnglish(text, extensionApi) {
+async function detectGermanFrenchOrEnglish(text, extensionApi) {
     if (extensionApi.i18n?.detectLanguage) {
         try {
             const detection = await extensionApi.i18n.detectLanguage(text);
             const best = detection?.languages?.[0];
             const language = best?.language?.toLowerCase() || "";
-            if ((language.startsWith("en") || language.startsWith("fr")) &&
+            if ((language.startsWith("en") || language.startsWith("fr") || language.startsWith("de")) &&
                 (best.percentage >= 50 || detection.isReliable)) {
-                return language.startsWith("en") ? "en" : "fr";
+                if (language.startsWith("en")) return "en";
+                if (language.startsWith("de")) return "de";
+                return "fr";
             }
         } catch (error) {
             console.debug("Built-in language detection unavailable; using local detection.", error);
         }
     }
 
-    const normalized = text.toLocaleLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const normalized = text.toLocaleLowerCase().normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "").replace(/ß/g, "ss");
     const words = normalized.match(/[a-z]+/g) || [];
     const frenchWords = new Set("alors au aucun aussi avec ce ces dans de des du elle en et eux il je la le les leur lui ma mais me meme mes moi mon ne nos notre nous on ou par pas pour pourquoi quand que qui sa se ses son sur ta te tes toi ton tous tout tu un une vos votre vous c est sont comment pourquoi ou quand parce donc".split(" "));
     const englishWords = new Set("a about after again all am an and any are as at be because been before being between both but by can could did do does doing down during each few for from further had has have having he her here hers herself him himself his how i if in into is it its itself just me more most my myself no nor not of off on once only or other our ours ourselves out over own same she should so some such than that the their theirs them themselves then there these they this those through to too under until up very was we were what when where which while who whom why with you your yours yourself yourselves".split(" "));
+    const germanWords = new Set("aber alle als also am an andere auch auf aus bei bin bis bist da dabei dadurch dafür dagegen daher damals damit dann das dass dein deine dem den denn der des deshalb die dies diese dieser dieses doch dort du durch ein eine einem einen einer eines er es etwas für gegen gewesen gibt habe haben hat hier hin ich ihm ihn ihr ihre im immer in ins ist ja jede jeder jedes kann kein keine können könnte machen man mehr mein meine mit muss müssen nach nachdem neben nein nicht nichts noch nun ob oder ohne sehr sein seine seit selbst sich sie sind so über um und uns unser unsere unter viel viele vom von vor war waren warum was weder weil welcher welche welches wem wen wenn wer werde werden wie wieder wir wo würde zu zum zur zusammen".split(" "));
     let frenchScore = /[àâçéèêëîïôùûüÿœ]/i.test(text) ? 2 : 0;
     let englishScore = 0;
+    let germanScore = /[äöüß]/i.test(text) ? 2 : 0;
     for (const word of words) {
         if (frenchWords.has(word)) frenchScore++;
         if (englishWords.has(word)) englishScore++;
+        if (germanWords.has(word)) germanScore++;
     }
 
-    if (englishScore > frenchScore) return "en";
-    if (frenchScore > englishScore) return "fr";
-    return navigator.language?.toLowerCase().startsWith("en") ? "en" : "fr";
+    if (germanScore > frenchScore && germanScore > englishScore) return "de";
+    if (englishScore > frenchScore && englishScore > germanScore) return "en";
+    if (frenchScore > germanScore) return "fr";
+    if (browserLanguage.startsWith("de")) return "de";
+    return browserLanguage.startsWith("en") ? "en" : "fr";
 }
-
 ///////////////////////////////// Functions ////////////////////////////////////////////////
 
 function createButton(svg) {

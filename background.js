@@ -10,26 +10,25 @@ browserApi.runtime.onMessage.addListener((message) => {
   return translateWithDeepL(message.text, message.sourceLang, message.targetLang);
 });
 
-async function translateWithDeepL(text, sourceLang = "fr") {
+async function translateWithDeepL(text, sourceLang = "fr", preferredTargetLang = "fr") {
   if (typeof text !== "string" || !text.trim()) {
     return { ok: false, error: "Texte vide." };
   }
 
-  try {
-    // Let DeepL detect the source. This is more reliable than local heuristics
-    // for one-word searches such as "hello", which have no useful stopwords.
-    const first = await requestDeepL(text, undefined, "en-US");
-    const detectedLanguage = first.detectedSourceLanguage.toLowerCase();
+  const englishQueryTarget = preferredTargetLang.toLowerCase().startsWith("de") ? "de" : "fr";
 
-    // English text was translated to English in the first pass; translate it
-    // to French instead. If detection is omitted by the service, use the
-    // local detector supplied by the content script as a fallback.
-    if (detectedLanguage.startsWith("en") ||
-        (!detectedLanguage && sourceLang.toLowerCase().startsWith("en"))) {
-      const french = await requestDeepL(text, "en", "fr");
-      return { ok: true, translation: french.translation };
+  try {
+    // First translate to English. DeepL's detected source language identifies
+    // German/French queries to English and English queries to the UI language.
+    const first = await requestDeepL(text, undefined, "en-US");
+    const detectedLanguage = (first.detectedSourceLanguage || sourceLang || "").toLowerCase();
+
+    if (detectedLanguage.startsWith("en")) {
+      const translated = await requestDeepL(text, "en", englishQueryTarget);
+      return { ok: true, translation: translated.translation };
     }
 
+    // French and German source text already has its English translation.
     return { ok: true, translation: first.translation };
   } catch (error) {
     console.error("DeepL request failed after retries:", error);
@@ -66,10 +65,7 @@ async function requestDeepL(text, sourceLang, targetLang) {
         clearTimeout(timeout);
       }
 
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
-
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const data = await response.json();
       const result = data?.translations?.[0];
       if (typeof result?.text !== "string" || !result.text.trim()) {
