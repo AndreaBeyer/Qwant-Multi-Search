@@ -11,11 +11,14 @@ body {
 
 main { padding: 4px; }
 
-h1 { margin: 0; font-size: 1.5rem; }
+h1 { margin: 0; font-size: 1.25rem; }
+.page-title { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+.page-title img { width: 24px; height: 24px; object-fit: contain; flex: 0 0 24px; }
 main > p { margin: 8px 0 22px; color: #5f6368; }
 
 form { display: grid; gap: 4px; }
 label { display: flex; align-items: center; gap: 10px; padding: 7px 2px; cursor: pointer; }
+.service-icon { width: 22px; height: 22px; object-fit: contain; flex: 0 0 22px; }
 input { width: 17px; height: 17px; accent-color: #1769aa; }
 
 .hint { margin: 14px 0 2px; color: #5f6368; font-size: .85rem; }

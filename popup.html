@@ -3,22 +3,22 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Qwant search buttons</title>
+  <title>Qwant Multi-Search</title>
   <link rel="stylesheet" href="options.css">
   <script src="options.js" defer></script>
 </head>
 <body>
   <main>
-    <h1>Qwant Multi-Search</h1>
+    <h1 class="page-title"><img src="images/action48.png" alt="" aria-hidden="true">Qwant Multi-Search</h1>
     <p data-i18n="settingsIntro">Choose which buttons to show. Changes are saved automatically.</p>
     <form id="settings">
-      <label><input type="checkbox" name="google"> Google</label>
-      <label><input type="checkbox" name="wikipedia"> <span data-i18n="wikipedia">Wikipedia</span></label>
-      <label><input type="checkbox" name="youtube"> YouTube</label>
-      <label><input type="checkbox" name="maps"> Google Maps</label>
-      <label><input type="checkbox" name="news"> <span data-i18n="googleNews">Google News</span></label>
-      <label><input type="checkbox" name="deepl"> <span data-i18n="deepl">DeepL (fr/en)</span></label>
-      <label><input type="checkbox" name="chatgpt"> ChatGPT</label>
+      <label><input type="checkbox" name="google"> <img class="service-icon" src="svgs/google.svg" alt="" aria-hidden="true"> Google</label>
+      <label><input type="checkbox" name="wikipedia"> <img class="service-icon" src="svgs/wiki.svg" alt="" aria-hidden="true"> <span data-i18n="wikipedia">Wikipedia</span></label>
+      <label><input type="checkbox" name="youtube"> <img class="service-icon" src="svgs/ytb.svg" alt="" aria-hidden="true"> YouTube</label>
+      <label><input type="checkbox" name="maps"> <img class="service-icon" src="svgs/map.svg" alt="" aria-hidden="true"> Google Maps</label>
+      <label><input type="checkbox" name="news"> <img class="service-icon" src="svgs/news.svg" alt="" aria-hidden="true"> <span data-i18n="googleNews">Google News</span></label>
+      <label><input type="checkbox" name="deepl"> <span data-i18n="deepl">🇫🇷 DeepL 🇬🇧</span></label>
+      <label><input type="checkbox" name="chatgpt"> <img class="service-icon" src="svgs/gpt.svg" alt="" aria-hidden="true"> ChatGPT</label>
       <p class="hint" data-i18n="reloadHint">Reload Qwant to apply your changes.</p>
       <span id="status" role="status" aria-live="polite"></span>
     </form>
