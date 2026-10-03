@@ -4,7 +4,7 @@
 // pour réparer rapidement en cas de rupture.
 const SEARCH_INPUT_SELECTOR = 'input[type="search"]';
 const RESULT_SELECTOR = '[data-testid="SERVariant-A"]';
-const SIDEBAR_OPEN_SELECTOR = 'nav[tabindex="-1"] a[aria-label="Fermer la barre latérale"]';
+const SIDEBAR_TOGGLE_SELECTOR = 'nav[tabindex="-1"] a[role="button"][href]';
 const extensionApi = globalThis.browser || globalThis.chrome;
 const message = (key) => extensionApi.i18n.getMessage(key);
 const browserLanguage = (extensionApi.i18n?.getUILanguage?.() || navigator.language || "").toLowerCase();
@@ -117,7 +117,12 @@ function keepButtonsMounted(container) {
         if (container.parentElement !== document.body) document.body.appendChild(container);
         const isAccountPage = window.location.pathname.startsWith("/account/");
         container.classList.toggle("qse-account-page", isAccountPage);
-        const sidebarIsOpen = Boolean(document.querySelector(SIDEBAR_OPEN_SELECTOR));
+        const sidebarToggle = document.querySelector(SIDEBAR_TOGGLE_SELECTOR);
+        const toggleHref = sidebarToggle?.getAttribute("href");
+        const toggleUrl = toggleHref ? new URL(toggleHref, window.location.href) : null;
+        // Qwant ajoute lateralBar=1 au lien qui ouvre la barre latérale.
+        // Ce signal structurel fonctionne quelle que soit la langue de l'interface.
+        const sidebarIsOpen = Boolean(toggleUrl && !toggleUrl.searchParams.has("lateralBar"));
         container.classList.toggle("qse-sidebar-open", sidebarIsOpen);
         const nav = document.querySelector("nav[tabindex='-1']") || document.querySelector("nav");
         if (nav) {
