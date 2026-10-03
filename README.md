@@ -12,7 +12,7 @@
 - 🌐 Compatible avec **Chrome et Chromium**
 - 🇫🇷 **Interface française** et traduction **DeepL français ↔ anglais**, dans les deux sens
 - 🇬🇧 **Interface anglaise** et traduction **DeepL français ↔ anglais**, dans les deux sens
-- 🇩🇪 Traduction **DeepL allemand ↔ anglais**, dans les deux sens
+- 🇩🇪 **Interface allemande** et traduction **DeepL allemand ↔ anglais**, dans les deux sens
 - 🔒 Aucune collecte de données personnelles par l’extension
 
 ## 🚀 Comment ça fonctionne ?
