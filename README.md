@@ -6,15 +6,17 @@ une recherche en un clic sur **Google, ChatGPT et d’autres services**,
 directement depuis Qwant.
 
 ## ✨ Fonctionnalités
+🔎 Rechercher rapidement une requête Qwant sur Google
+🤖 Envoyer directement une recherche à ChatGPT
+🌐 Utiliser plusieurs services de recherche depuis une même page
+⚡ Recherche rapide en un seul clic
+🦊 Compatible avec Firefox et Firefox ESR
+🌐 Compatible avec Chrome et Chromium
+🇫🇷 Interface française et traduction DeepL français ↔ anglais, dans les deux sens
+🇬🇧 Interface anglaise et traduction DeepL français ↔ anglais, dans les deux sens
+🇩🇪 Traduction DeepL allemand ↔ anglais, dans les deux sens
 
-- 🔎 Rechercher rapidement une requête Qwant sur **Google**
-- 🤖 Envoyer directement une recherche à **ChatGPT**
-- 🌐 Utiliser plusieurs services de recherche depuis une même page
-- ⚡ Recherche rapide en un seul clic
-- 🦊 Compatible avec **Firefox et Firefox ESR**
-- 🌐 Compatible avec **Chrome et Chromium**
-- 🇩🇪 Interface allemande et traduction DeepL entre l’allemand et l’anglais
-- 🔒 Aucune collecte de données personnelles par l’extension
+🔒 Aucune collecte de données personnelles par l’extension
 
 ## 🚀 Comment ça fonctionne ?
 
