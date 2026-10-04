@@ -1,5 +1,13 @@
 const DEEPL_URL = "https://oneshot-free.www.deepl.com/v1/storefront/translate";
 const browserApi = globalThis.browser || globalThis.chrome;
+browserApi.runtime.onInstalled.addListener((details) => {
+  if (details.reason === "install") {
+    browserApi.runtime.openOptionsPage().catch((error) => {
+      console.error("Could not open options page after installation:", error);
+    });
+  }
+});
+
 
 browserApi.runtime.onMessage.addListener((message) => {
   if (!message || message.action !== "translateWithDeepL") return undefined;
