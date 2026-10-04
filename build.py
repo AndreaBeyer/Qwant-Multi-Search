@@ -110,7 +110,7 @@ def create_zip(source_dir, output_path):
             for file in files:
                 if file not in EXCLUDE_FILES:
                     file_path = Path(root) / file
-                    arcname = file_path.relative_to(source_dir.parent)
+                    arcname = file_path.relative_to(source_dir)
                     zipf.write(file_path, arcname)
     
     print(f"✓ Created {output_path}")
@@ -151,8 +151,8 @@ def main():
         
         # Create ZIP files
         print("📦 Creating ZIP archives...")
-        chrome_zip = PROJECT_DIR / f'Qwant-Multi-Search-v{VERSION}-chrome.zip'
-        firefox_zip = PROJECT_DIR / f'Qwant-Multi-Search-v{VERSION}-firefox.zip'
+        chrome_zip = dist_dir / f'Qwant-Multi-Search-v{VERSION}-chrome.zip'
+        firefox_zip = dist_dir / f'Qwant-Multi-Search-v{VERSION}-firefox.zip'
         
         create_zip(chrome_dir, chrome_zip)
         create_zip(firefox_dir, firefox_zip)

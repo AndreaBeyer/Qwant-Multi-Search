@@ -107,6 +107,49 @@ Puis :
 4. Cliquez sur **Charger l’extension non empaquetée**.
 5. Sélectionnez le dossier contenant `manifest.json`.
 
+## 🛠️ Build
+
+Le dépôt contient trois scripts de build qui génèrent les versions **Chrome** et **Firefox** de l’extension dans le dossier `dist/`, avec des `manifest.json` adaptés à chaque navigateur :
+
+- **Chrome** : background en `service_worker` + `minimum_chrome_version`
+- **Firefox** : background en `scripts` + `browser_specific_settings`
+
+### Script Python (recommandé)
+
+```bash
+python3 build.py
+```
+
+### Script Bash
+
+```bash
+chmod +x build.sh
+./build.sh
+```
+
+### Node.js (npm)
+
+```bash
+npm run build
+```
+
+> `package.json` définit aussi les alias `npm run build:chrome` et `npm run build:firefox`, mais `build.js` construit actuellement les deux versions à chaque exécution.
+
+### Résultat du build
+
+```
+dist/
+├── chrome/          # Extension Chrome/Chromium
+└── firefox/         # Extension Firefox
+```
+
+Les archives suivantes sont également créées dans `dist/` :
+
+- `Qwant-Multi-Search-v{version}-chrome.zip`
+- `Qwant-Multi-Search-v{version}-firefox.zip`
+
+Pour plus de détails (structure des fichiers, tests, signature des extensions, CI), consultez [BUILD.md](BUILD.md).
+
 ## 🔒 Confidentialité
 
 Qwant Multi-Search est conçu pour respecter la vie privée de ses utilisateurs.
