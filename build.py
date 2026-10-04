@@ -53,8 +53,7 @@ def save_json(filepath, data):
     """Save JSON file with formatting"""
     with open(filepath, 'w', encoding='utf-8') as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
-        f.write('
-')
+        f.write('\n')
 
 
 def get_version():
