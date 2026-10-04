@@ -5,7 +5,5 @@ PRIVACY.md
 # Build files
 dist/
 *.zip
-build.js
-build.sh
 package.json
 node_modules/
