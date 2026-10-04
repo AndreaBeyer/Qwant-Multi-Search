@@ -48,3 +48,48 @@ body[data-theme="light"] .qse-button #wiki,
 body[data-theme="light"] .qse-button #gpt {
     fill: #202124;
 }
+
+/* Mobile: colonne verticale -> barre de navigation fixée en bas de l'écran.
+   Le seuil doit rester synchronisé avec le matchMedia de mount() dans script.js. */
+@media (max-width: 760px) {
+    .qse-button-container {
+        flex-direction: row;
+        justify-content: center;
+        gap: 4px;
+        top: auto;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        width: auto;
+        transform: none;
+        box-sizing: border-box;
+        padding: 6px max(8px, env(safe-area-inset-left)) calc(6px + env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-right));
+        background-color: rgba(255, 255, 255, 0.95);
+        border-top: 1px solid rgba(0, 0, 0, 0.08);
+    }
+
+    body[data-theme="dark"] .qse-button-container {
+        background-color: rgba(21, 26, 32, 0.95);
+        border-top-color: rgba(255, 255, 255, 0.12);
+    }
+
+    .qse-button {
+        min-width: 44px;
+        min-height: 44px;
+        margin: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+}
+
+/* Qwant pousse son application mobile via une bannière persistante en haut de
+   l'écran (smartbanner) et une carte dédiée sur la page d'accueil. Les classes
+   de Qwant sont régénérées à chaque build, on cible donc les liens vers le
+   Play Store. Le badge discret du footer reste visible. (:has() = Chrome 105+,
+   Firefox 121+.) */
+div:has(> a[href*="com.qwant.liberty"][href*="utm_medium=smartbanner"]),
+div:has(> div > a[href*="com.qwant.liberty"][href*="utm_medium=smartbanner"]),
+a[href*="com.qwant.liberty"][href*="utm_medium=qr"] {
+    display: none !important;
+}

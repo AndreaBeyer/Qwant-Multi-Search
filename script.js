@@ -146,8 +146,13 @@ function keepButtonsMounted(container) {
         // Ce signal structurel fonctionne quelle que soit la langue de l'interface.
         const sidebarIsOpen = Boolean(toggleUrl && !toggleUrl.searchParams.has("lateralBar"));
         container.classList.toggle("qse-sidebar-open", sidebarIsOpen);
-        const nav = document.querySelector("nav[tabindex='-1']") || document.querySelector("nav");
-        if (nav) {
+        // Mobile (voir media query dans styles.css): la barre occupe toute la
+        // largeur en bas d'écran, le positionnement relatif à la nav n'a pas de sens.
+        const isMobileLayout = window.matchMedia("(max-width: 760px)").matches;
+        const nav = isMobileLayout ? null : document.querySelector("nav[tabindex='-1']") || document.querySelector("nav");
+        if (isMobileLayout) {
+            container.style.removeProperty("left");
+        } else if (nav) {
             const bounds = nav.getBoundingClientRect();
             container.style.setProperty("left", `${Math.max(0, bounds.left + bounds.width / 2 - 16)}px`);
             if (nav !== observedNav) {

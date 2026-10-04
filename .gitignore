@@ -3,3 +3,4 @@ dist/
 *.zip
 package.json
 node_modules/
+prompt
