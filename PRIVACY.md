@@ -70,7 +70,7 @@ Qwant Multi-Search does not collect names, email addresses, IP addresses, browsi
 
 Pour toute question ou demande concernant l'extension, vous pouvez utiliser la page GitHub du projet :
 
-https://github.com/AndreaBeyer/Qwant-search-enhancer
+https://github.com/AndreaBeyer/Qwant-Multi-Search
 
 ### English
 
@@ -78,4 +78,4 @@ https://github.com/AndreaBeyer/Qwant-search-enhancer
 
 For any questions or requests regarding the extension, you can use the project's GitHub page:
 
-https://github.com/AndreaBeyer/Qwant-search-enhancer
+https://github.com/AndreaBeyer/Qwant-Multi-Search
