@@ -1,175 +1,102 @@
-# Build Instructions for Qwant Search Enhancer
+# Build — Documentation détaillée
 
-This document explains how to build the browser extension for Chrome and Firefox.
+Ce document décrit le fonctionnement interne des scripts de build de **Qwant Multi-Search**.
 
-## Quick Start
+## Vue d'ensemble
 
-### Using the build script (recommended)
+Le projet est maintenu avec un `manifest.json` unique à la racine, au format **Firefox** (background en `scripts`). Les scripts de build génèrent deux variantes :
 
-1. **Run the build script:**
-   ```bash
-   chmod +x build.sh
-   ./build.sh
-   ```
+- **Chrome** : background en `service_worker` + `minimum_chrome_version`
+- **Firefox** : background en `scripts` + `browser_specific_settings`
 
-2. **Output:**
-   - Chrome extension: `dist/chrome/`
-   - Firefox extension: `dist/firefox/`
-   - Chrome ZIP: `Qwant-Multi-Search-v1.1.2-chrome.zip` (if zip is available)
-   - Firefox ZIP: `Qwant-Multi-Search-v1.1.2-firefox.zip` (if zip is available)
+Chaque build produit un dossier dans `dist/` et une archive ZIP prête à être soumise aux stores (`manifest.json` à la racine du ZIP).
 
-### Manual build without zip
+```
+dist/
+├── chrome/                                  # Extension Chrome/Chromium
+├── firefox/                                 # Extension Firefox
+├── Qwant-Multi-Search-v{version}-chrome.zip
+└── Qwant-Multi-Search-v{version}-firefox.zip
+```
 
-If you don't have `zip` installed, the build script will only create the directories. You can manually create ZIP files:
+## build.py (recommandé)
 
 ```bash
-cd dist
-zip -r ../Qwant-Multi-Search-v1.1.2-chrome.zip chrome/
-zip -r ../Qwant-Multi-Search-v1.1.2-firefox.zip firefox/
+python3 build.py             # Chrome + Firefox
+python3 build.py chrome     # Chrome uniquement
+python3 build.py firefox    # Firefox uniquement
 ```
 
-## File Structure
+Aucune dépendance externe : uniquement la bibliothèque standard Python (`json`, `shutil`, `zipfile`, `pathlib`).
 
-After building, you'll have:
+### Déroulé pas à pas
+
+1. **Validation des sources** (`validate_source`) — le script vérifie que tous les fichiers requis sont présents (`manifest.json`, `background.js`, `helpers.js`, `script.js`, `styles.css`, `popup.html`, `options.*`, `_locales`). S'il en manque un seul, il échoue immédiatement avec un message clair, avant toute écriture.
+2. **Lecture de la version** (`get_version`) — la version est lue directement dans `manifest.json` (`"version": "x.y.z"`). C'est la seule source de vérité : les ZIP sont toujours nommés avec la version réelle de l'extension.
+3. **Nettoyage** — si `dist/` existe, il est supprimé intégralement puis recréé. Les builds sont toujours reproductibles depuis zéro.
+4. **Copie sélective** (`copy_directory`) — les fichiers sources sont copiés récursivement dans `dist/chrome` et `dist/firefox`, en excluant tout ce qui ne doit pas être distribué :
+
+   | Exclu | Raison |
+   |---|---|
+   | `.git`, `.gitignore`, `.gitattributes` | métadonnées Git |
+   | `build.py`, `build.sh`, `build.js` | scripts de build |
+   | `package.json`, `package-lock.json`, `node_modules` | outillage Node |
+   | `dist` | sortie du build |
+   | `BUILD.md`, `README.md`, `PRIVACY.md` | documentation |
+
+5. **Génération du manifest Chrome** (`generate_chrome_manifest`) :
+   - supprime `browser_specific_settings` (inconnu de Chrome, rejeté par le store) ;
+   - convertit `background.scripts` en `background.service_worker` (format MV3 Chrome) ;
+   - ajoute `"minimum_chrome_version": "122"`.
+6. **Génération du manifest Firefox** (`generate_firefox_manifest`) :
+   - s'assure que `browser_specific_settings` existe (avec l'ID Gecko `qwant-search-enhancer@andreabeyer.fr` et `data_collection_permissions`) ;
+   - si le manifest source était en `service_worker`, le reconvertit en `scripts` ;
+   - supprime `minimum_chrome_version` s'il est présent.
+7. **Écriture des manifests** (`save_json`) — chaque manifest est réécrit en JSON indenté (2 espaces, `ensure_ascii=False` pour préserver accents et emojis).
+8. **Création des ZIP** (`create_zip`) — parcours récursif du dossier cible, compression `ZIP_DEFLATED`. Les entrées sont relatives au dossier (`arcname`), donc `manifest.json` se retrouve à la **racine de l'archive**, exactement ce qu'attendent le Chrome Web Store et AMO.
+9. **Rapport final** — chemins des dossiers et des ZIP, code de retour 0 (succès) ou 1 (échec).
+
+### Sortie console type
 
 ```
-Qwant-search-enhancer/
-├── dist/
-│   ├── chrome/          # Chrome/Chromium extension files
-│   │   ├── manifest.json (with service_worker & minimum_chrome_version)
-│   │   ├── background.js
-│   │   ├── script.js
-│   │   ├── helpers.js
-│   │   ├── popup.html
-│   │   ├── options.html
-│   │   ├── options.js
-│   │   ├── options.css
-│   │   ├── styles.css
-│   │   ├── images/
-│   │   ├── svgs/
-│   │   ├── _locales/
-│   │   ├── LICENSE
-│   │   └── README.md
-│   │
-│   └── firefox/         # Firefox extension files
-│       ├── manifest.json (with browser_specific_settings)
-│       ├── background.js
-│       └── ... (same files as chrome)
-├── build.sh            # Build script
-├── build.js            # Node.js build script (alternative)
-└── package.json        # Node.js project configuration
+🚀 Starting build...
+Version: 1.1.2
+📄 Copying source files and generating manifests...
+✓ Chrome manifest: .../dist/chrome/manifest.json
+✓ Firefox manifest: .../dist/firefox/manifest.json
+📦 Creating ZIP archives...
+✓ Created ...
+✅ Build completed successfully!
 ```
 
-## Key Differences Between Chrome and Firefox
+## build.sh
 
-### Chrome/Chromium
-- Uses Manifest V3
-- Background script as `service_worker`
-- Requires `minimum_chrome_version`
-- No `browser_specific_settings`
-
-### Firefox
-- Uses Manifest V3
-- Background script as `scripts` array
-- Requires `browser_specific_settings.gecko.id` for signed extensions
-- Includes `data_collection_permissions`
-
-## Testing the Extensions
-
-### Chrome/Chromium
-1. Go to `chrome://extensions/`
-2. Enable Developer mode
-3. Click "Load unpacked extension"
-4. Select the `dist/chrome/` directory
-
-### Firefox
-1. Go to `about:debugging`
-2. Click "This Firefox" (left sidebar)
-3. Click "Load Temporary Add-on"
-4. Select the `manifest.json` in `dist/firefox/`
-
-## Creating Signed Extensions
-
-### For Chrome Web Store
-1. Create a ZIP of the `dist/chrome/` directory
-2. Upload to Chrome Web Store developer dashboard
-3. Submit for review
-
-### For Firefox Add-ons
-1. Create a ZIP of the `dist/firefox/` directory
-2. Upload to Firefox Add-ons developer hub
-3. Sign the extension
-4. Submit for review
-
-## Version Management
-
-Update the version in these locations:
-1. `manifest.json` (all versions) - `"version"` field
-2. `build.sh` - `VERSION` variable
-3. ZIP filenames - automatically uses the version variable
-
-## Clean Build
-
-To clean up and rebuild from scratch:
+Équivalent en Bash :
 
 ```bash
-rm -rf dist *.zip
+chmod +x build.sh
 ./build.sh
 ```
 
-## Troubleshooting
+- Dépend de l'outil externe `zip` (paquet `zip` sur Debian/Ubuntu) ;
+- Même logique : copie sélective → génération des manifests → ZIP versionné dans `dist/` ;
+- Construit toujours les deux navigateurs, sans sélection de cible.
 
-### "zip command not found"
-Install zip on your system:
+## build.js (Node.js)
 
-- **Ubuntu/Debian:** `sudo apt-get install zip`
-- **Fedora:** `sudo dnf install zip`
-- **macOS:** Already included
-- **Windows:** Use 7-Zip or install Git Bash (includes zip)
-
-### Permission denied on build.sh
 ```bash
-chmod +x build.sh
+npm run build
 ```
 
-### Node.js build (alternative)
-If you prefer Node.js, you can use the build.js script:
-```bash
-npm install
-node build.js
-```
+- Utilise le module `fs` de Node et `child_process.execSync` pour appeler `zip` ;
+- ⚠️ La version y est codée en dur (`const VERSION = ...`) — pense à la mettre à jour manuellement, ou privilégie `build.py` qui lit `manifest.json` ;
+- ⚠️ Le ZIP est créé avec un dossier racine inclus (`zip -r ... <dossier>`), ce qui peut poser problème lors de la soumission sur certains stores. `build.py` est le script de référence pour générer les archives de publication.
 
-## Continuous Integration
+## Dépannage
 
-For CI/CD pipelines, you can use:
-
-```yaml
-# GitHub Actions example
-name: Build Extension
-
-on: [push, pull_request]
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-    - name: Install zip
-      run: sudo apt-get update && sudo apt-get install -y zip
-    - name: Build extensions
-      run: chmod +x build.sh && ./build.sh
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v3
-      with:
-        name: chrome-extension
-        path: dist/chrome/
-    - name: Upload Firefox artifact
-      uses: actions/upload-artifact@v3
-      with:
-        name: firefox-extension
-        path: dist/firefox/
-```
-
-## Contact
-
-For issues or questions, please open a GitHub issue on the project repository.
+| Problème | Solution |
+|---|---|
+| `Missing required files: ...` | Un fichier source requis est absent ou renommé — rétablir le fichier ou mettre à jour `REQUIRED_FILES` dans `build.py` |
+| ZIP refusé par le store | Utiliser `build.py` (manifest à la racine du ZIP), pas `build.js` |
+| Mauvaise version dans le nom du ZIP | `build.py` lit `manifest.json` — vérifier la clé `version` du manifest |
+| `zip: command not found` (`build.sh` / `build.js`) | Installer le paquet `zip` ou utiliser `build.py` (aucune dépendance) |
