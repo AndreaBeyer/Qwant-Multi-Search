@@ -102,8 +102,10 @@ async function initializeQwantEnhancer() {
             if (enabledButtons[id] === false) return;
             const button = createButton(svg);
             button.setAttribute("aria-label", message(label));
-            button.title = message(label);
-            button.onclick = onClick;
+            // Sur mobile, l'attribut title declenche un tooltip natif qui peut
+            // avaler le premier tap. Il n'a d'utilite qu'avec un pointeur precis.
+            if (window.matchMedia("(pointer: fine)").matches) button.title = message(label);
+            attachTap(button, onClick);
             button.addEventListener("mousedown", function (event) {
                 if (event.button === 1) {
                     $openBlank(typeof home === "function" ? home() : home);
@@ -302,6 +304,41 @@ function createButton(svg) {
     }
 
     return button;
+}
+
+// Sur mobile, le click d'un tap peut etre ave par le navigateur (tooltip du
+// title, hover colle, preventDefault sur un touchstart de la page, zoom
+// double-tap). On detecte le tap sur les Pointer Events, qui ne sont pas
+// supprimes par preventDefault("touchstart"), et on garde le click classique
+// en repli pour la souris, avec un garde-fou contre le double declenchement.
+function attachTap(element, action) {
+    let pointerStart = null;
+    let lastTapAt = 0;
+
+    element.addEventListener("pointerdown", (event) => {
+        pointerStart = { x: event.clientX, y: event.clientY };
+    });
+
+    element.addEventListener("pointercancel", () => {
+        pointerStart = null;
+    });
+
+    element.addEventListener("pointerup", (event) => {
+        if (!pointerStart || event.pointerType === "mouse") return;
+        const startX = pointerStart.x;
+        const startY = pointerStart.y;
+        pointerStart = null;
+        if (event.button !== 0) return;
+        // Un appui deplace de plus de 12px est un glisse (scroll), pas un tap.
+        if (Math.hypot(event.clientX - startX, event.clientY - startY) > 12) return;
+        lastTapAt = Date.now();
+        action();
+    });
+
+    element.addEventListener("click", () => {
+        if (Date.now() - lastTapAt < 600) return;
+        action();
+    });
 }
 
 ///////////////////////////////// Listeners ////////////////////////////////////////////////

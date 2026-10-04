@@ -63,9 +63,26 @@ body[data-theme="light"] .qse-button #gpt {
         width: auto;
         transform: none;
         box-sizing: border-box;
-        padding: 6px max(8px, env(safe-area-inset-left)) calc(6px + env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-right));
+        /* Pas de env(safe-area-inset-*): Firefox Android y renvoie des valeurs
+           enormes (48px constates sur un Galaxy S25) qui varient quand la barre
+           d'URL du navigateur change d'etat, faisant "grandir" la barre au
+           premier tap. Valeurs fixes, le navigateur gere la zone de gestes. */
+        padding: 6px 8px;
         background-color: rgba(255, 255, 255, 0.95);
         border-top: 1px solid rgba(0, 0, 0, 0.08);
+        /* Le conteneur doit capter tout le tap: les zones de padding/gap ne
+           doivent jamais retomber sur les elements fixes de Qwant positionnes
+           derriere la barre (sidebar, bottom sheet). */
+        pointer-events: auto;
+        touch-action: manipulation;
+        user-select: none;
+        -webkit-user-select: none;
+        -webkit-tap-highlight-color: transparent;
+        /* Hauteur verrouillee (44px de boutons + 12px de padding + 1px de
+           bordure): le conteneur ne peut pas changer de taille. */
+        flex-wrap: nowrap;
+        overflow: hidden;
+        height: 57px;
     }
 
     body[data-theme="dark"] .qse-button-container {
@@ -80,6 +97,25 @@ body[data-theme="light"] .qse-button #gpt {
         display: inline-flex;
         align-items: center;
         justify-content: center;
+        /* Tactile: supprimer le delai/double-tap zoom, la selection de texte
+           et le surlignage orange qui donne l'impression que le 1er tap
+           "ne fait rien". */
+        touch-action: manipulation;
+        user-select: none;
+        -webkit-user-select: none;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Les SVG sources sont dimensionnes en em: leur taille depend du font-size
+       herite de Qwant et peut varier apres un re-rendu. Taille fixe en px. */
+    .qse-button svg {
+        width: auto;
+        height: 28px;
+    }
+
+    /* Retour visuel immediat du tap sur ecran tactile. */
+    .qse-button:active {
+        opacity: 0.6;
     }
 }
 
