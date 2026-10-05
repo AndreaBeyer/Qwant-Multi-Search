@@ -13,18 +13,24 @@ const messageCatalog = {
     en: {
         google: "Google", wikipedia: "Wikipedia", youtube: "YouTube",
         googleMaps: "Google Maps", googleNews: "Google News", chatgpt: "ChatGPT",
+        mistral: "Mistral", perplexity: "Perplexity",
+        openOptions: "Open options",
         searchShortcuts: "Search shortcuts",
         translationError: "Translation failed. Check your connection and try again."
     },
     fr: {
         google: "Google", wikipedia: "Wikipédia", youtube: "YouTube",
         googleMaps: "Google Maps", googleNews: "Google Actualités", chatgpt: "ChatGPT",
+        mistral: "Mistral", perplexity: "Perplexity",
+        openOptions: "Ouvrir les options",
         searchShortcuts: "Raccourcis de recherche",
         translationError: "La traduction n’a pas abouti. Vérifiez votre connexion puis réessayez."
     },
     de: {
         google: "Google", wikipedia: "Wikipedia", youtube: "YouTube",
         googleMaps: "Google Maps", googleNews: "Google News", chatgpt: "ChatGPT",
+        mistral: "Mistral", perplexity: "Perplexity",
+        openOptions: "Optionen öffnen",
         searchShortcuts: "Suchverknüpfungen",
         translationError: "Die Übersetzung ist fehlgeschlagen. Prüfe deine Verbindung und versuche es erneut."
     }
@@ -67,7 +73,7 @@ async function loadSVG(id) {
 
 // Charge tous les SVG nécessaires
 async function loadAllSVGs() {
-    const svgIds = ['google', 'wiki', 'ytb', 'map', 'news', 'deepl', 'gpt'];
+    const svgIds = ['google', 'wiki', 'ytb', 'map', 'news', 'deepl', 'gpt', 'mistral', 'perplexity'];
     const promises = svgIds.map(id => loadSVG(id));
     await Promise.all(promises);
 }
@@ -86,7 +92,9 @@ async function initializeQwantEnhancer() {
         { id: "maps", label: "googleMaps", svg: svgCache.get('map'), onClick: searchOrOpen("https://www.google.com/maps/search/", "https://www.google.com/maps/"), home: "https://www.google.com/maps/" },
         { id: "news", label: "googleNews", svg: svgCache.get('news'), onClick: searchOrOpen("https://news.google.com/search?q=", "https://news.google.com/"), home: "https://news.google.com/" },
         { id: "deepl", label: "deepl", svg: svgCache.get('deepl'), onClick: clickTranslateHandler, home: "https://www.deepl.com/" },
-        { id: "chatgpt", label: "chatgpt", svg: svgCache.get('gpt'), onClick: searchOrOpen("https://chatgpt.com/?q=", "https://chatgpt.com/"), home: "https://chatgpt.com/" }
+        { id: "chatgpt", label: "chatgpt", svg: svgCache.get('gpt'), onClick: searchOrOpen("https://chatgpt.com/?q=", "https://chatgpt.com/"), home: "https://chatgpt.com/" },
+        { id: "mistral", label: "mistral", svg: svgCache.get('mistral'), onClick: searchOrOpen("https://chat.mistral.ai/chat?q=", "https://chat.mistral.ai/"), home: "https://chat.mistral.ai/" },
+        { id: "perplexity", label: "perplexity", svg: svgCache.get('perplexity'), onClick: searchOrOpen("https://www.perplexity.ai/search?q=", "https://www.perplexity.ai/"), home: "https://www.perplexity.ai/" }
     ];
 
     Promise.resolve()
@@ -97,9 +105,15 @@ async function initializeQwantEnhancer() {
         container.className = "qse-button-container";
         container.setAttribute("aria-label", message("searchShortcuts"));
 
+        const isEnabledByDefault = (id) => {
+            if (id === "deepl") return deeplEnabledByDefault;
+            // Mistral et Perplexity sont désactivés par défaut.
+            const disabledByDefault = new Set(["mistral", "perplexity"]);
+            return !disabledByDefault.has(id);
+        };
+
         buttonDefinitions.forEach(({ id, label, svg, onClick, home }) => {
-            if (id === "deepl" && enabledButtons[id] === undefined && !deeplEnabledByDefault) return;
-            if (enabledButtons[id] === false) return;
+            if (enabledButtons[id] === undefined ? !isEnabledByDefault(id) : enabledButtons[id] === false) return;
             const button = createButton(svg);
             button.setAttribute("aria-label", message(label));
             // Sur mobile, l'attribut title declenche un tooltip natif qui peut
@@ -114,15 +128,33 @@ async function initializeQwantEnhancer() {
             container.appendChild(button);
         });
 
+        // Bouton d'accès aux options: icone de l'extension fixee en bas a
+        // droite (desktop uniquement, masquee par media query sur mobile).
+        // runtime.openOptionsPage() n'existe pas dans un content script:
+        // le clic passe par un message au background.
+        const settingsButton = $create("a");
+        settingsButton.className = "qse-settings-button";
+        settingsButton.setAttribute("aria-label", message("openOptions"));
+        settingsButton.title = message("openOptions");
+        const settingsIcon = $create("img");
+        settingsIcon.src = extensionApi.runtime.getURL("images/action48.png");
+        settingsIcon.alt = "";
+        settingsButton.appendChild(settingsIcon);
+        settingsButton.addEventListener("click", () => {
+            Promise.resolve(extensionApi.runtime.sendMessage({ action: "openOptions" })).catch((error) => {
+                console.error("Could not request options page:", error);
+            });
+        });
+
         // Qwant remplace parfois son contenu pendant le chargement. Garder le
         // conteneur sous documentElement et le rattacher au body dès qu'il existe.
-        keepButtonsMounted(container);
+        keepButtonsMounted(container, settingsButton);
     });
 
     addListeners();
 }
 
-function keepButtonsMounted(container) {
+function keepButtonsMounted(container, settingsButton) {
     let mountScheduled = false;
     let observedNav = null;
     let navResizeObserver = null;
@@ -139,6 +171,7 @@ function keepButtonsMounted(container) {
     function mount() {
         if (!document.body) return;
         if (container.parentElement !== document.body) document.body.appendChild(container);
+        if (settingsButton.parentElement !== document.body) document.body.appendChild(settingsButton);
         const isAccountPage = window.location.pathname.startsWith("/account/");
         container.classList.toggle("qse-account-page", isAccountPage);
         const sidebarToggle = document.querySelector(SIDEBAR_TOGGLE_SELECTOR);

@@ -40,13 +40,38 @@ body[data-theme="dark"] .qse-button #deepl {
 }
 
 body[data-theme="dark"] .qse-button #wiki,
-body[data-theme="dark"] .qse-button #gpt {
+body[data-theme="dark"] .qse-button #gpt,
+body[data-theme="dark"] .qse-button #perplexity {
     fill: #fff;
 }
 
 body[data-theme="light"] .qse-button #wiki,
-body[data-theme="light"] .qse-button #gpt {
+body[data-theme="light"] .qse-button #gpt,
+body[data-theme="light"] .qse-button #perplexity {
     fill: #202124;
+}
+
+/* Bouton d'acces aux options: icone de l'extension fixee en bas a droite.
+   Desktop uniquement: masque sous le meme seuil que la barre de boutons
+   mobile (voir matchMedia dans script.js). */
+.qse-settings-button {
+    position: fixed;
+    right: 16px;
+    bottom: 16px;
+    z-index: 2147483647;
+    cursor: pointer;
+}
+
+.qse-settings-button img {
+    display: block;
+    width: 42px;
+    height: 42px;
+}
+
+@media (max-width: 760px) {
+    .qse-settings-button {
+        display: none;
+    }
 }
 
 /* Mobile: colonne verticale -> barre de navigation fixée en bas de l'écran.

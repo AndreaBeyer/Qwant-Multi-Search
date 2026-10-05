@@ -1,7 +1,7 @@
 {
   "name": "__MSG_extensionName__",
   "default_locale": "en",
-  "version": "1.2.1",
+  "version": "1.3.0",
   "author": "Andréa Beyer",
   "description": "__MSG_extensionDescription__",
   "manifest_version": 3,
@@ -11,7 +11,8 @@
   "web_accessible_resources": [
     {
       "resources": [
-        "svgs/*.svg"
+        "svgs/*.svg",
+        "images/action48.png"
       ],
       "matches": [
         "https://www.qwant.com/*"

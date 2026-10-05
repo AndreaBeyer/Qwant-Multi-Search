@@ -10,6 +10,8 @@ const normalizedUiLanguage = uiLanguage.toLowerCase();
 const language = normalizedUiLanguage.startsWith("fr") ? "fr" : normalizedUiLanguage.startsWith("de") ? "de" : "en";
 const deeplPairLabel = normalizedUiLanguage.startsWith("de") ? "🇩🇪 DeepL 🇬🇧" : "🇫🇷 DeepL 🇬🇧";
 const deeplEnabledByDefault = normalizedUiLanguage.startsWith("fr") || normalizedUiLanguage.startsWith("en") || normalizedUiLanguage.startsWith("de");
+// Mistral et Perplexity sont désactivés par défaut.
+const disabledByDefault = ["mistral", "perplexity"];
 const messages = {
   en: {
     optionsTitle: "Qwant Multi-Search — Options",
@@ -41,13 +43,17 @@ document.querySelectorAll("[data-i18n]").forEach((element) => {
 });
 document.title = message("optionsTitle");
 
+const isEnabledByDefault = (id) => {
+  if (disabledByDefault.includes(id)) return false;
+  return id !== "deepl" || deeplEnabledByDefault;
+};
+
 extensionApi.storage.local.get("enabledButtons").then(({ enabledButtons = {} } = {}) => {
   buttonIds.forEach((id) => {
-    const defaultEnabled = id !== "deepl" || deeplEnabledByDefault;
-    form.elements.namedItem(id).checked = enabledButtons[id] === undefined ? defaultEnabled : enabledButtons[id] !== false;
+    form.elements.namedItem(id).checked = enabledButtons[id] === undefined ? isEnabledByDefault(id) : enabledButtons[id] !== false;
   });
 }).catch(() => {
-  buttonIds.forEach((id) => { form.elements.namedItem(id).checked = id !== "deepl" || deeplEnabledByDefault; });
+  buttonIds.forEach((id) => { form.elements.namedItem(id).checked = isEnabledByDefault(id); });
 });
 
 form.addEventListener("change", () => {

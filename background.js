@@ -10,6 +10,12 @@ browserApi.runtime.onInstalled.addListener((details) => {
 
 
 browserApi.runtime.onMessage.addListener((message) => {
+  if (message && message.action === "openOptions") {
+    browserApi.runtime.openOptionsPage().catch((error) => {
+      console.error("Could not open options page:", error);
+    });
+    return undefined;
+  }
   if (!message || message.action !== "translateWithDeepL") return undefined;
   return translateWithDeepL(message.text, message.sourceLang, message.targetLang);
 });
