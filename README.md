@@ -88,7 +88,7 @@ zip -r Qwant-Multi-Search.zip Qwant-Multi-Search
 
 L'extension est également destinée à être distribuée sur le **Chrome Web Store**.
 
-👉 [Chrome Web Store](https://chromewebstore.google.com/detail/qwant-search-enhancer/kepafadhpgppildfnbkndiebkpojjcgm)
+👉 [Chrome Web Store](https://chromewebstore.google.com/detail/qwant-multi-search/kepafadhpgppildfnbkndiebkpojjcgm)
 
 ### Installation depuis les sources
 
