@@ -45,7 +45,7 @@ L'extension permet notamment d'utiliser :
 
 L'extension est disponible sur Mozilla Add-ons :
 
-👉 [Installer depuis Firefox Add-ons](https://addons.mozilla.org/)
+👉 [Installer depuis Firefox Add-ons](https://addons.mozilla.org/fr/firefox/addon/qwant-multi-search/)
 
 ### Installation depuis les sources
 
