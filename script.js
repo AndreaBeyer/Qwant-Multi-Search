@@ -38,6 +38,14 @@ const messageCatalog = {
 const message = (key) => key === "deepl" ? deeplLabel : messageCatalog[messageLanguage][key] || key;
 const deeplEnabledByDefault = browserLanguage.startsWith("fr") || browserLanguage.startsWith("en") || browserLanguage.startsWith("de");
 
+// Caracteres reels des touches de raccourci sur ce clavier (ex. AZERTY:
+// "&" pour la position 1), appris a l'usage dans addListeners et persistes
+// dans storage.local sous la cle shortcutKeyLabels. L'API Keyboard
+// (getLayoutMap) est absente sur Firefox et renvoie une carte vide sur
+// Chrome Linux: l'apprentissage est le mecanisme fiable.
+let shortcutKeyLabels = {};
+let shortcutButtons = [];
+
 // Valeur de la barre de recherche Qwant, ou "" si elle est absente
 // (ex. pages /account/).
 function getSearchQuery() {
@@ -98,9 +106,9 @@ async function initializeQwantEnhancer() {
     ];
 
     Promise.resolve()
-        .then(() => extensionApi?.storage?.local?.get(["enabledButtons", "buttonOrder"]))
+        .then(() => extensionApi?.storage?.local?.get(["enabledButtons", "buttonOrder", "shortcutKeyLabels"]))
         .catch(() => ({}))
-        .then(({ enabledButtons = {}, buttonOrder } = {}) => {
+        .then(({ enabledButtons = {}, buttonOrder, shortcutKeyLabels: savedShortcutKeyLabels = {} } = {}) => {
         const container = $create("div");
         container.className = "qse-button-container";
         container.setAttribute("aria-label", message("searchShortcuts"));
@@ -128,7 +136,10 @@ async function initializeQwantEnhancer() {
             const button = createButton(svg);
             // Petit badge en bas a gauche de l'icone: le raccourci clavier
             // correspondant (touches 1-9, voir addListeners dans script.js).
-            if (position < 9) button.dataset.shortcut = position + 1;
+            if (position < 9) {
+                button.dataset.shortcut = position + 1;
+                shortcutButtons[position] = button;
+            }
             position++;
             button.setAttribute("aria-label", message(label));
             // Sur mobile, l'attribut title declenche un tooltip natif qui peut
@@ -143,16 +154,24 @@ async function initializeQwantEnhancer() {
             container.appendChild(button);
         });
 
-        // API Keyboard (Chrome/Edge desktop): afficher le caractere
-        // reellement produit par la touche physique du raccourci selon la
-        // disposition du clavier (ex. AZERTY: "&" pour Digit1). La ou l'API
-        // n'existe pas (Firefox, mobile), le badge garde le chiffre.
+        // Etiquettes deja apprises sur ce clavier: elles remplacent le
+        // chiffre de position des le chargement.
+        shortcutKeyLabels = savedShortcutKeyLabels;
+        shortcutButtons.forEach((button, index) => {
+            if (shortcutKeyLabels[index + 1]) button.dataset.shortcut = shortcutKeyLabels[index + 1];
+        });
+
+        // API Keyboard (Chrome/Edge Windows et macOS): affichage immediat du
+        // caractere produit par la touche selon la disposition (ex. AZERTY:
+        // "&" pour Digit1). Les etiquettes apprises restent prioritaires, et
+        // la ou l'API est absente ou vide (Firefox, Chrome Linux), le badge
+        // garde le chiffre jusqu'a la premiere pression reelle.
         const layoutMapPromise = navigator.keyboard?.getLayoutMap?.();
         if (layoutMapPromise) {
             layoutMapPromise.then((layoutMap) => {
-                container.querySelectorAll("[data-shortcut]").forEach((button) => {
-                    const label = layoutMap.get(`Digit${button.dataset.shortcut}`);
-                    if (label) button.dataset.shortcut = label;
+                shortcutButtons.forEach((button, index) => {
+                    const label = layoutMap.get(`Digit${index + 1}`);
+                    if (label && !shortcutKeyLabels[index + 1]) button.dataset.shortcut = label;
                 });
             }).catch(() => {});
         }
@@ -482,8 +501,18 @@ function addListeners() {
         // (raccourcis du navigateur ou caractères spéciaux).
         const digitMatch = /^(?:Digit|Numpad)([1-9])$/.exec(event.code);
         if (digitMatch && !event.ctrlKey && !event.metaKey && !event.altKey) {
+            const position = Number(digitMatch[1]);
+            // Apprentissage du caractere reel de la touche physique
+            // (event.key): unique source fiable du layout sur Firefox et
+            // Chrome Linux, ou l'API Keyboard est absente ou vide. Le pavé
+            // numerique n'apprend rien (il produit toujours le chiffre).
+            if (event.code.startsWith("Digit") && shortcutKeyLabels[position] !== event.key) {
+                shortcutKeyLabels[position] = event.key;
+                if (shortcutButtons[position - 1]) shortcutButtons[position - 1].dataset.shortcut = event.key;
+                Promise.resolve(extensionApi?.storage?.local?.set({ shortcutKeyLabels })).catch(() => {});
+            }
             const buttons = $$(".qse-button-container .qse-button");
-            const button = buttons[Number(digitMatch[1]) - 1];
+            const button = buttons[position - 1];
             if (button) {
                 event.preventDefault();
                 button.click();
