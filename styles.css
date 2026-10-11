@@ -152,12 +152,6 @@ body[data-theme="light"] .qse-button #perplexity {
     border-radius: 6px;
 }
 
-/* Ne garder que le liseré du conteneur: masquer l'anneau de focus natif du
-   lien titre sur lequel script.js place le focus. */
-.qse-selected :focus-visible {
-    outline: none;
-}
-
 /* Qwant pousse son application mobile via une bannière persistante en haut de
    l'écran (smartbanner) et une carte dédiée sur la page d'accueil. Les classes
    de Qwant sont régénérées à chaque build, on cible donc les liens vers le

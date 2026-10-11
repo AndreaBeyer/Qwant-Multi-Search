@@ -379,6 +379,7 @@ function attachTap(element, action) {
 function addListeners() {
     let currentFocus = -1;
     let selectedContainer = null;
+    let selectedLink = null;
 
     const isEditableElement = (element) =>
         Boolean(element?.closest?.("input, textarea, select, [contenteditable='true']"));
@@ -428,7 +429,10 @@ function addListeners() {
         selectedContainer?.classList.remove("qse-selected");
         selectedContainer = link.closest(RESULT_SELECTOR);
         selectedContainer?.classList.add("qse-selected");
-        link.focus();
+        // Pas de link.focus(): le navigateur dessinerait un cadre de focus
+        // autour du titre en plus du liseré du conteneur. La touche Entrée
+        // est gérée dans le listener keydown.
+        selectedLink = link;
         link.scrollIntoView({ behavior: "smooth", block: "center" });
         return true;
     };
@@ -442,11 +446,22 @@ function addListeners() {
             return;
         }
 
+        // Entrée ouvre le résultat sélectionné (Ctrl/Cmd+Entrée: nouvel
+        // onglet). Seulement si aucun élément interactif n'a le focus, pour
+        // ne pas voler les Entrée destinées à la page.
+        if (event.key === "Enter" && selectedLink &&
+            (!document.activeElement || document.activeElement === document.body)) {
+            event.preventDefault();
+            if (event.ctrlKey || event.metaKey) $openBlank(selectedLink.href);
+            else $open(selectedLink.href);
+            return;
+        }
+
         // Escape quitte la navigation clavier et rend le focus à la page.
         if (event.key === "Escape" && currentFocus >= 0) {
             selectedContainer?.classList.remove("qse-selected");
             selectedContainer = null;
-            document.activeElement?.blur?.();
+            selectedLink = null;
             currentFocus = -1;
             return;
         }
