@@ -122,9 +122,15 @@ async function initializeQwantEnhancer() {
             (orderIndex.get(a.id) ?? Infinity) - (orderIndex.get(b.id) ?? Infinity)
         );
 
+        let position = 0;
         orderedDefinitions.forEach(({ id, label, svg, onClick, home }) => {
             if (enabledButtons[id] === undefined ? !isEnabledByDefault(id) : enabledButtons[id] === false) return;
             const button = createButton(svg);
+            // Badge du raccourci clavier (Alt+1-9), affiche seulement
+            // pendant l'appui sur Alt: la classe qse-alt-held est posee
+            // dans addListeners, le style vit dans styles.css.
+            if (position < 9) button.dataset.shortcut = position + 1;
+            position++;
             button.setAttribute("aria-label", message(label));
             // Sur mobile, l'attribut title declenche un tooltip natif qui peut
             // avaler le premier tap. Il n'a d'utilite qu'avec un pointeur precis.
@@ -448,6 +454,13 @@ function addListeners() {
     };
 
     document.addEventListener("keydown", (event) => {
+        // Appui sur Alt: afficher les badges de raccourci (Alt+1-9). La
+        // classe est retiree au relachement (keyup) et au blur de la
+        // fenetre pour eviter un badge reste apres un Alt+Tab.
+        if (event.key === "Alt") {
+            document.querySelector(".qse-button-container")?.classList.add("qse-alt-held");
+        }
+
         // Alt + 1-9: declenche le bouton correspondant, y compris pendant
         // la saisie dans la searchbox (avant la garde des champs editables).
         // Touche physique (event.code): en AZERTY, la rangee "&", "é"...
@@ -508,5 +521,14 @@ function addListeners() {
         if (nextIndex < 0 || nextIndex >= links.length) return;
 
         if (selectResult(links, nextIndex)) currentFocus = nextIndex;
+    });
+
+    document.addEventListener("keyup", (event) => {
+        if (event.key === "Alt") {
+            document.querySelector(".qse-button-container")?.classList.remove("qse-alt-held");
+        }
+    });
+    window.addEventListener("blur", () => {
+        document.querySelector(".qse-button-container")?.classList.remove("qse-alt-held");
     });
 }

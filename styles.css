@@ -29,6 +29,35 @@
     background-color: transparent;
     border: none;
     pointer-events: auto;
+    position: relative;
+}
+
+/* Badge du raccourci clavier (Alt+1-9) en bas a gauche de l'icone, affiche
+   uniquement pendant l'appui sur Alt: la classe qse-alt-held est posee par
+   script.js sur le conteneur. data-shortcut n'est pose que sur les neuf
+   premiers boutons affiches. */
+.qse-button[data-shortcut]::after {
+    content: attr(data-shortcut);
+    position: absolute;
+    left: -8px;
+    bottom: 2px;
+    font: 700 9px/1 sans-serif;
+    color: inherit;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .12s ease-in-out;
+}
+
+.qse-button-container.qse-alt-held .qse-button[data-shortcut]::after {
+    opacity: 1;
+}
+
+body[data-theme="dark"] .qse-button[data-shortcut]::after {
+    color: #fff;
+}
+
+body[data-theme="light"] .qse-button[data-shortcut]::after {
+    color: #000;
 }
 
 .qse-button:hover {
