@@ -19,6 +19,16 @@ main > p { margin: 8px 0 22px; color: #5f6368; }
 form { display: grid; gap: 4px; }
 label { display: flex; align-items: center; gap: 10px; padding: 7px 2px; cursor: pointer; }
 .service-icon { width: 22px; height: 22px; object-fit: contain; flex: 0 0 22px; }
+/* Numero du raccourci clavier (touches 1-9, voir script.js), ancre a droite
+   de la case. Vide si la case est decochee: pas de bouton affiche sur Qwant,
+   pas de raccourci. */
+.shortcut-number {
+  margin-left: auto;
+  font-size: .85rem;
+  font-variant-numeric: tabular-nums;
+  color: #5f6368;
+  text-align: right;
+}
 input { width: 17px; height: 17px; accent-color: #1769aa; }
 
 .hint { margin: 14px 0 2px; color: #5f6368; font-size: .85rem; }

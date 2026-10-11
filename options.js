@@ -53,6 +53,27 @@ const isEnabledByDefault = (id) => {
 const getLabels = () => Array.from(form.querySelectorAll("label"));
 const hint = form.querySelector(".hint");
 
+// Numero du raccourci clavier (touches 1-9) ancre a droite de chaque case:
+// il suit l'ordre courant et ne compte que les bouton actives, exactement
+// comme les badges poses sur Qwant (script.js). Cases decochees ou au-dela
+// du 9e bouton active: pas de numero, pas de raccourci.
+const updateShortcutNumbers = () => {
+  let position = 0;
+  getLabels().forEach((label) => {
+    const input = label.querySelector("input");
+    const badge = label.querySelector(".shortcut-number");
+    position += input.checked ? 1 : 0;
+    badge.textContent = input.checked && position <= 9 ? position : "";
+  });
+};
+
+getLabels().forEach((label) => {
+  const badge = document.createElement("span");
+  badge.className = "shortcut-number";
+  badge.setAttribute("aria-hidden", "true");
+  label.appendChild(badge);
+});
+
 const applyOrder = (order) => {
   if (!Array.isArray(order)) return;
   order.forEach((id) => {
@@ -81,8 +102,10 @@ extensionApi.storage.local.get(["enabledButtons", "buttonOrder"]).then(({ enable
   });
   applyOrder(buttonOrder);
   savedOrder = getLabels().map((label) => label.querySelector("input").name);
+  updateShortcutNumbers();
 }).catch(() => {
   buttonIds.forEach((id) => { form.elements.namedItem(id).checked = isEnabledByDefault(id); });
+  updateShortcutNumbers();
 });
 
 // Glisser-déposer d'une ligne pour réordonner les boutons. La ligne suit le
@@ -101,6 +124,7 @@ getLabels().forEach((label) => {
     label.classList.remove("dragging");
     draggedLabel = null;
     saveButtonOrder();
+    updateShortcutNumbers();
   });
   label.addEventListener("dragover", (event) => {
     if (!draggedLabel || draggedLabel === label) return;
@@ -109,10 +133,12 @@ getLabels().forEach((label) => {
     const bounds = label.getBoundingClientRect();
     const after = event.clientY > bounds.top + bounds.height / 2;
     form.insertBefore(draggedLabel, after ? label.nextElementSibling : label);
+    updateShortcutNumbers();
   });
 });
 
 form.addEventListener("change", () => {
+  updateShortcutNumbers();
   const enabledButtons = Object.fromEntries(buttonIds.map((id) => [id, form.elements.namedItem(id).checked]));
   extensionApi.storage.local.set({ enabledButtons }).then(() => {
     status.textContent = message("savedStatus");
