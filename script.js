@@ -462,13 +462,16 @@ function addListeners() {
         }
 
         // Chiffres 1-9: declenchent le bouton de raccourci correspondant.
-        // On lit event.key: la touche doit reellement produire le chiffre.
-        // En AZERTY cela signifie Shift + touche de la rangée, ou le pavé
-        // numérique. On ignore les combinaisons avec Ctrl/Meta/Alt (raccourcis
-        // du navigateur ou caractères spéciaux).
-        if (/^[1-9]$/.test(event.key) && !event.ctrlKey && !event.metaKey && !event.altKey) {
+        // On lit event.code (touche physique) et non event.key: en AZERTY,
+        // appuyer sans Shift sur la rangée "& é \"..." active le raccourci;
+        // le pavé numérique marche aussi, s'il est en NumLock. On ignore les
+        // combinaisons avec Ctrl/Meta/Alt (raccourcis du navigateur ou
+        // caractères spéciaux).
+        const digitMatch = /^(?:Digit|Numpad)([1-9])$/.exec(event.code);
+        if (digitMatch && !event.ctrlKey && !event.metaKey && !event.altKey &&
+            (event.code.startsWith("Digit") || (event.getModifierState?.("NumLock") ?? true))) {
             const buttons = $$(".qse-button-container .qse-button");
-            const button = buttons[Number(event.key) - 1];
+            const button = buttons[Number(digitMatch[1]) - 1];
             if (button) {
                 event.preventDefault();
                 button.click();
