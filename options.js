@@ -18,7 +18,7 @@ const messages = {
     settingsIntro: "Choose which buttons to show and drag them to change their order. Changes are saved automatically.",
     wikipedia: "Wikipedia", googleNews: "Google News",
     reloadHint: "Reload Qwant to apply your changes.",
-    shortcutLabel: "shortcut",
+    shortcutLabel: "Shortcut",
     savedStatus: "Saved.", saveError: "Could not save your preferences."
   },
   fr: {
@@ -26,7 +26,7 @@ const messages = {
     settingsIntro: "Choisissez les boutons à afficher et faites-les glisser pour changer leur ordre. Les changements sont enregistrés automatiquement.",
     wikipedia: "Wikipédia", googleNews: "Google Actualités",
     reloadHint: "Rechargez Qwant pour appliquer les changements.",
-    shortcutLabel: "raccourci",
+    shortcutLabel: "Raccourci",
     savedStatus: "Enregistré.", saveError: "Impossible d’enregistrer les préférences."
   },
   de: {
@@ -34,7 +34,7 @@ const messages = {
     settingsIntro: "Wähle die Schaltflächen aus und ziehe sie, um ihre Reihenfolge zu ändern. Änderungen werden automatisch gespeichert.",
     wikipedia: "Wikipedia", googleNews: "Google News",
     reloadHint: "Lade Qwant neu, um deine Änderungen anzuwenden.",
-    shortcutLabel: "shortcut",
+    shortcutLabel: "Shortcut",
     savedStatus: "Gespeichert.", saveError: "Deine Einstellungen konnten nicht gespeichert werden."
   }
 };
