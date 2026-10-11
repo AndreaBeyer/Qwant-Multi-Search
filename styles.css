@@ -32,9 +32,9 @@
     position: relative;
 }
 
-/* Badge discret en bas a gauche de l'icone: le numero du raccourci clavier
-   (touches 1-9, voir script.js). data-shortcut n'est pose que sur les neuf
-   premiers boutons affiches. */
+/* Badge en bas a gauche de l'icone: le numero du raccourci clavier (touches
+   1-9, voir script.js). Masque par defaut, affiche au survol de l'icone.
+   data-shortcut n'est pose que sur les neuf premiers boutons affiches. */
 .qse-button[data-shortcut]::after {
     content: attr(data-shortcut);
     position: absolute;
@@ -43,6 +43,12 @@
     font: 700 9px/1 sans-serif;
     color: inherit;
     pointer-events: none;
+    opacity: 0;
+    transition: opacity .12s ease-in-out;
+}
+
+.qse-button:hover[data-shortcut]::after {
+    opacity: 1;
 }
 
 body[data-theme="dark"] .qse-button[data-shortcut]::after {
