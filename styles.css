@@ -144,6 +144,14 @@ body[data-theme="light"] .qse-button #perplexity {
     }
 }
 
+/* Résultat sélectionné au clavier (flèches haut/bas, voir script.js):
+   liseré bleu visible aussi bien en thème clair que sombre. */
+.qse-selected {
+    outline: 2px solid #3b82f6;
+    outline-offset: 3px;
+    border-radius: 6px;
+}
+
 /* Qwant pousse son application mobile via une bannière persistante en haut de
    l'écran (smartbanner) et une carte dédiée sur la page d'accueil. Les classes
    de Qwant sont régénérées à chaque build, on cible donc les liens vers le

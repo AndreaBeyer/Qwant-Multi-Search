@@ -378,18 +378,63 @@ function attachTap(element, action) {
 
 function addListeners() {
     let currentFocus = -1;
+    let selectedContainer = null;
 
-    const focusResult = (results, index) => {
-        // Le 4e lien d'un résultat est le lien principal.
-        const link = results[index]?.getElementsByTagName("a")[3];
+    const isEditableElement = (element) =>
+        Boolean(element?.closest?.("input, textarea, select, [contenteditable='true']"));
+
+    const isVisible = (element) => element.getBoundingClientRect().height > 0;
+
+    // Un lien de résultat pointe vers le site externe, pas vers Qwant.
+    const isExternalLink = (link) => {
+        try {
+            return /^https?:\/\//.test(link.href) &&
+                !new URL(link.href).hostname.endsWith("qwant.com");
+        } catch (error) {
+            return false;
+        }
+    };
+
+    // Lien principal d'un résultat: le lien externe au texte le plus long
+    // (l'ancre du titre). L'ordre des <a> dans le DOM de Qwant change d'un
+    // build à l'autre, le "4e lien" historique n'est qu'un dernier repli.
+    const findMainLink = (result) => {
+        const links = Array.from(result.getElementsByTagName("a")).filter(isVisible);
+        if (links.length === 0) return null;
+        const external = links.filter(isExternalLink);
+        if (external.length > 0) {
+            return external.reduce((best, link) =>
+                link.textContent.trim().length > best.textContent.trim().length ? link : best);
+        }
+        return links[Math.min(3, links.length - 1)];
+    };
+
+    const getResultLinks = () => {
+        const containers = Array.from($$(RESULT_SELECTOR)).filter(isVisible);
+        const links = containers.map(findMainLink).filter(Boolean);
+        // Repli si le data-testid de Qwant change: tous les liens externes
+        // visibles de la page.
+        if (links.length === 0) {
+            return Array.from(document.getElementsByTagName("a"))
+                .filter(isVisible)
+                .filter(isExternalLink);
+        }
+        return links;
+    };
+
+    const selectResult = (links, index) => {
+        const link = links[index];
         if (!link) return false;
+        selectedContainer?.classList.remove("qse-selected");
+        selectedContainer = link.closest(RESULT_SELECTOR);
+        selectedContainer?.classList.add("qse-selected");
         link.focus();
         link.scrollIntoView({ behavior: "smooth", block: "center" });
         return true;
     };
 
     document.addEventListener("keydown", (event) => {
-        if (document.activeElement === $(SEARCH_INPUT_SELECTOR)) return;
+        if (isEditableElement(document.activeElement)) return;
 
         if (event.key === "/") {
             $(SEARCH_INPUT_SELECTOR)?.focus();
@@ -397,19 +442,28 @@ function addListeners() {
             return;
         }
 
+        // Escape quitte la navigation clavier et rend le focus à la page.
+        if (event.key === "Escape" && currentFocus >= 0) {
+            selectedContainer?.classList.remove("qse-selected");
+            selectedContainer = null;
+            document.activeElement?.blur?.();
+            currentFocus = -1;
+            return;
+        }
+
         if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
         event.preventDefault();
 
-        const results = $$(RESULT_SELECTOR);
-        if (results.length === 0) return;
+        const links = getResultLinks();
+        if (links.length === 0) return;
 
         // ArrowUp sur le premier résultat ne fait rien; ArrowDown/ArrowUp
         // depuis aucun résultat sélectionné ciblent le premier.
         const nextIndex = event.key === "ArrowDown"
             ? currentFocus + 1
             : (currentFocus < 0 ? 0 : currentFocus - 1);
-        if (nextIndex < 0) return;
+        if (nextIndex < 0 || nextIndex >= links.length) return;
 
-        if (focusResult(results, nextIndex)) currentFocus = nextIndex;
+        if (selectResult(links, nextIndex)) currentFocus = nextIndex;
     });
 }
