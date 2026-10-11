@@ -42,8 +42,15 @@
     bottom: 2px;
     font: 700 9px/1 sans-serif;
     color: inherit;
-    opacity: .55;
     pointer-events: none;
+}
+
+body[data-theme="dark"] .qse-button[data-shortcut]::after {
+    color: #fff;
+}
+
+body[data-theme="light"] .qse-button[data-shortcut]::after {
+    color: #000;
 }
 
 .qse-button:hover {
