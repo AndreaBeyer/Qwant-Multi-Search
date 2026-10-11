@@ -60,16 +60,6 @@ const hint = form.querySelector(".hint");
 // il suit l'ordre courant et ne compte que les bouton actives, exactement
 // comme les badges poses sur Qwant (script.js). Cases decochees ou au-dela
 // du 9e bouton active: pas de numero, pas de raccourci.
-// Etiquettes des touches de raccourci selon la disposition du clavier.
-// Priorite: etiquettes apprises par pression reelle (storage.local,
-// "shortcutKeyLabels") > API Keyboard (absente ou vide sur Firefox et
-// Chrome Linux) > chiffre de position.
-let learnedKeyLabels = {};
-let layoutKeyLabels = null;
-
-const getShortcutKeyLabel = (position) =>
-  learnedKeyLabels[position] ?? layoutKeyLabels?.[position] ?? position;
-
 const updateShortcutNumbers = () => {
   let position = 0;
   getLabels().forEach((label) => {
@@ -77,39 +67,9 @@ const updateShortcutNumbers = () => {
     const badge = label.querySelector(".shortcut-number");
     position += input.checked ? 1 : 0;
     badge.textContent = input.checked && position <= 9
-      ? `${message("shortcutLabel")} ${getShortcutKeyLabel(position)}` : "";
+      ? `${message("shortcutLabel")} ${position}` : "";
   });
 };
-
-// Detection instantanee via l'API Keyboard (Chrome/Edge Windows et macOS).
-const loadShortcutKeyLabels = () => {
-  const layoutMapPromise = navigator.keyboard?.getLayoutMap?.();
-  if (!layoutMapPromise) return;
-  layoutMapPromise.then((layoutMap) => {
-    const labels = {};
-    for (let position = 1; position <= 9; position++) {
-      const label = layoutMap.get(`Digit${position}`);
-      if (label) labels[position] = label;
-    }
-    if (Object.keys(labels).length) {
-      layoutKeyLabels = labels;
-      updateShortcutNumbers();
-    }
-  }).catch(() => {});
-};
-loadShortcutKeyLabels();
-
-// Apprentissage: presser une touche de raccourci ici enregistre le
-// caractere reellement produit (event.key) et le persiste. Unique source
-// fiable du layout sur Firefox et Chrome Linux.
-document.addEventListener("keydown", (event) => {
-  if (event.ctrlKey || event.metaKey || event.altKey) return;
-  const digitMatch = /^Digit([1-9])$/.exec(event.code);
-  if (!digitMatch || learnedKeyLabels[digitMatch[1]] === event.key) return;
-  learnedKeyLabels[digitMatch[1]] = event.key;
-  updateShortcutNumbers();
-  extensionApi.storage.local.set({ shortcutKeyLabels: learnedKeyLabels }).catch(() => {});
-});
 
 getLabels().forEach((label) => {
   const badge = document.createElement("span");
@@ -140,8 +100,10 @@ const saveButtonOrder = () => {
 
 let savedOrder = null;
 
-extensionApi.storage.local.get(["enabledButtons", "buttonOrder", "shortcutKeyLabels"]).then(({ enabledButtons = {}, buttonOrder, shortcutKeyLabels: storedKeyLabels = {} } = {}) => {
-  learnedKeyLabels = storedKeyLabels || {};
+extensionApi.storage.local.get(["enabledButtons", "buttonOrder"]).then(({ enabledButtons = {}, buttonOrder } = {}) => {
+  // Cle depreciee de l'ancienne gestion des dispositions clavier: on la
+  // supprime pour ne pas laisser de donnees mortes.
+  extensionApi.storage.local.remove("shortcutKeyLabels").catch(() => {});
   buttonIds.forEach((id) => {
     form.elements.namedItem(id).checked = enabledButtons[id] === undefined ? isEnabledByDefault(id) : enabledButtons[id] !== false;
   });
