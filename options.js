@@ -5,6 +5,10 @@ const buttonIds = Array.from(form.elements)
   .filter((element) => element.type === "checkbox")
   .map((element) => element.name);
 
+// La popup de la barre d'outils partage ce script: le glisser-deposer et les
+// numeros de raccourci n'ont de sens que sur la page d'options complete.
+const isSettingsPage = document.body.classList.contains("settings-page");
+
 const uiLanguage = extensionApi.i18n?.getUILanguage?.() || navigator.language || "en";
 const normalizedUiLanguage = uiLanguage.toLowerCase();
 const language = normalizedUiLanguage.startsWith("fr") ? "fr" : normalizedUiLanguage.startsWith("de") ? "de" : "en";
@@ -57,10 +61,10 @@ const getLabels = () => Array.from(form.querySelectorAll("label"));
 const hint = form.querySelector(".hint");
 
 // Numero du raccourci clavier (touches 1-9) ancre a droite de chaque case:
-// il suit l'ordre courant et ne compte que les bouton actives, exactement
-// comme les badges poses sur Qwant (script.js). Cases decochees ou au-dela
-// du 9e bouton active: pas de numero, pas de raccourci.
+// il suit l'ordre courant et ne compte que les boutons actives. Cases
+// decochees ou au-dela du 9e bouton active: pas de numero, pas de raccourci.
 const updateShortcutNumbers = () => {
+  if (!isSettingsPage) return;
   let position = 0;
   getLabels().forEach((label) => {
     const input = label.querySelector("input");
@@ -71,12 +75,14 @@ const updateShortcutNumbers = () => {
   });
 };
 
-getLabels().forEach((label) => {
-  const badge = document.createElement("span");
-  badge.className = "shortcut-number";
-  badge.setAttribute("aria-hidden", "true");
-  label.appendChild(badge);
-});
+if (isSettingsPage) {
+  getLabels().forEach((label) => {
+    const badge = document.createElement("span");
+    badge.className = "shortcut-number";
+    badge.setAttribute("aria-hidden", "true");
+    label.appendChild(badge);
+  });
+}
 
 const applyOrder = (order) => {
   if (!Array.isArray(order)) return;
@@ -115,12 +121,14 @@ extensionApi.storage.local.get(["enabledButtons", "buttonOrder"]).then(({ enable
   updateShortcutNumbers();
 });
 
-// Glisser-déposer d'une ligne pour réordonner les boutons. La ligne suit le
-// pointeur pendant dragover; l'ordre n'est sauvegardé qu'à la fin du
-// glissement, et seulement s'il a effectivement changé.
+// Glisser-déposer d'une ligne pour réordonner les boutons (page d'options
+// uniquement: la popup reste une simple liste de cases a cocher). La ligne
+// suit le pointeur pendant dragover; l'ordre n'est sauvegardé qu'à la fin
+// du glissement, et seulement s'il a effectivement changé.
 let draggedLabel = null;
 
-getLabels().forEach((label) => {
+if (isSettingsPage) {
+  getLabels().forEach((label) => {
   label.addEventListener("dragstart", (event) => {
     draggedLabel = label;
     label.classList.add("dragging");
@@ -142,7 +150,8 @@ getLabels().forEach((label) => {
     form.insertBefore(draggedLabel, after ? label.nextElementSibling : label);
     updateShortcutNumbers();
   });
-});
+  });
+}
 
 form.addEventListener("change", () => {
   updateShortcutNumbers();
