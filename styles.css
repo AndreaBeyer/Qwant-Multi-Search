@@ -39,7 +39,7 @@
 .qse-button[data-shortcut]::after {
     content: attr(data-shortcut);
     position: absolute;
-    left: -8px;
+    left: -10px;
     bottom: 2px;
     font: 700 9px/1 sans-serif;
     color: inherit;
