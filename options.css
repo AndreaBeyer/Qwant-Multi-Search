@@ -63,6 +63,8 @@ body.settings-page {
   background: #fbfcfe;
 }
 .settings-page label:hover { background: #f2f6fb; }
+.settings-page label[draggable="true"] { cursor: grab; }
+.settings-page label.dragging { opacity: .55; border-style: dashed; cursor: grabbing; }
 .settings-page .hint {
   margin: 12px 0 0;
   padding-top: 12px;

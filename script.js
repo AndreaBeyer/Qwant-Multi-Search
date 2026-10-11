@@ -98,9 +98,9 @@ async function initializeQwantEnhancer() {
     ];
 
     Promise.resolve()
-        .then(() => extensionApi?.storage?.local?.get("enabledButtons"))
+        .then(() => extensionApi?.storage?.local?.get(["enabledButtons", "buttonOrder"]))
         .catch(() => ({}))
-        .then(({ enabledButtons = {} } = {}) => {
+        .then(({ enabledButtons = {}, buttonOrder } = {}) => {
         const container = $create("div");
         container.className = "qse-button-container";
         container.setAttribute("aria-label", message("searchShortcuts"));
@@ -112,7 +112,17 @@ async function initializeQwantEnhancer() {
             return !disabledByDefault.has(id);
         };
 
-        buttonDefinitions.forEach(({ id, label, svg, onClick, home }) => {
+        // Ordre personnalisé défini dans les options (glisser-déposer). Les
+        // identifiants absents de l'ordre enregistré gardent leur position
+        // par défaut (Array.prototype.sort est stable).
+        const orderIndex = new Map(
+            (Array.isArray(buttonOrder) ? buttonOrder : []).map((id, index) => [id, index])
+        );
+        const orderedDefinitions = [...buttonDefinitions].sort((a, b) =>
+            (orderIndex.get(a.id) ?? Infinity) - (orderIndex.get(b.id) ?? Infinity)
+        );
+
+        orderedDefinitions.forEach(({ id, label, svg, onClick, home }) => {
             if (enabledButtons[id] === undefined ? !isEnabledByDefault(id) : enabledButtons[id] === false) return;
             const button = createButton(svg);
             button.setAttribute("aria-label", message(label));
