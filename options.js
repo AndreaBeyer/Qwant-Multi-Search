@@ -18,6 +18,7 @@ const messages = {
     settingsIntro: "Choose which buttons to show and drag them to change their order. Changes are saved automatically.",
     wikipedia: "Wikipedia", googleNews: "Google News",
     reloadHint: "Reload Qwant to apply your changes.",
+    shortcutLabel: "shortcut",
     savedStatus: "Saved.", saveError: "Could not save your preferences."
   },
   fr: {
@@ -25,6 +26,7 @@ const messages = {
     settingsIntro: "Choisissez les boutons à afficher et faites-les glisser pour changer leur ordre. Les changements sont enregistrés automatiquement.",
     wikipedia: "Wikipédia", googleNews: "Google Actualités",
     reloadHint: "Rechargez Qwant pour appliquer les changements.",
+    shortcutLabel: "raccourci",
     savedStatus: "Enregistré.", saveError: "Impossible d’enregistrer les préférences."
   },
   de: {
@@ -32,6 +34,7 @@ const messages = {
     settingsIntro: "Wähle die Schaltflächen aus und ziehe sie, um ihre Reihenfolge zu ändern. Änderungen werden automatisch gespeichert.",
     wikipedia: "Wikipedia", googleNews: "Google News",
     reloadHint: "Lade Qwant neu, um deine Änderungen anzuwenden.",
+    shortcutLabel: "shortcut",
     savedStatus: "Gespeichert.", saveError: "Deine Einstellungen konnten nicht gespeichert werden."
   }
 };
@@ -63,7 +66,8 @@ const updateShortcutNumbers = () => {
     const input = label.querySelector("input");
     const badge = label.querySelector(".shortcut-number");
     position += input.checked ? 1 : 0;
-    badge.textContent = input.checked && position <= 9 ? position : "";
+    badge.textContent = input.checked && position <= 9
+      ? `${message("shortcutLabel")} ${position}` : "";
   });
 };
 
