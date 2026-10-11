@@ -29,6 +29,21 @@
     background-color: transparent;
     border: none;
     pointer-events: auto;
+    position: relative;
+}
+
+/* Badge discret en bas a gauche de l'icone: le numero du raccourci clavier
+   (touches 1-9, voir script.js). data-shortcut n'est pose que sur les neuf
+   premiers boutons affiches. */
+.qse-button[data-shortcut]::after {
+    content: attr(data-shortcut);
+    position: absolute;
+    left: -3px;
+    bottom: 2px;
+    font: 700 9px/1 sans-serif;
+    color: inherit;
+    opacity: .55;
+    pointer-events: none;
 }
 
 .qse-button:hover {

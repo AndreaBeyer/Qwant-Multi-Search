@@ -122,9 +122,14 @@ async function initializeQwantEnhancer() {
             (orderIndex.get(a.id) ?? Infinity) - (orderIndex.get(b.id) ?? Infinity)
         );
 
+        let position = 0;
         orderedDefinitions.forEach(({ id, label, svg, onClick, home }) => {
             if (enabledButtons[id] === undefined ? !isEnabledByDefault(id) : enabledButtons[id] === false) return;
             const button = createButton(svg);
+            // Petit badge en bas a gauche de l'icone: le raccourci clavier
+            // correspondant (touches 1-9, voir addListeners dans script.js).
+            if (position < 9) button.dataset.shortcut = position + 1;
+            position++;
             button.setAttribute("aria-label", message(label));
             // Sur mobile, l'attribut title declenche un tooltip natif qui peut
             // avaler le premier tap. Il n'a d'utilite qu'avec un pointeur precis.
