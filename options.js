@@ -60,9 +60,9 @@ const isEnabledByDefault = (id) => {
 const getLabels = () => Array.from(form.querySelectorAll("label"));
 const hint = form.querySelector(".hint");
 
-// Numero du raccourci clavier (touches 1-9) ancre a droite de chaque case:
-// il suit l'ordre courant et ne compte que les boutons actives. Cases
-// decochees ou au-dela du 9e bouton active: pas de numero, pas de raccourci.
+// Raccourci clavier (Alt + 1-9) ancre a droite de chaque case: il suit
+// l'ordre courant et ne compte que les boutons actives. Cases decochees ou
+// au-dela du 9e bouton active: pas de numero, pas de raccourci.
 const updateShortcutNumbers = () => {
   if (!isSettingsPage) return;
   let position = 0;
@@ -71,7 +71,7 @@ const updateShortcutNumbers = () => {
     const badge = label.querySelector(".shortcut-number");
     position += input.checked ? 1 : 0;
     badge.textContent = input.checked && position <= 9
-      ? `${message("shortcutLabel")} ${position}` : "";
+      ? `${message("shortcutLabel")} Alt+${position}` : "";
   });
 };
 

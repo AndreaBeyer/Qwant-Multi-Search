@@ -448,22 +448,14 @@ function addListeners() {
     };
 
     document.addEventListener("keydown", (event) => {
-        if (isEditableElement(document.activeElement)) return;
-
-        if (event.key === "/") {
-            $(SEARCH_INPUT_SELECTOR)?.focus();
-            event.preventDefault();
-            return;
-        }
-
-        // Chiffres 1-9: declenchent le bouton de raccourci correspondant.
-        // On lit event.code (touche physique) et non event.key: en AZERTY,
-        // appuyer sans Shift sur la rangée "& é \"..." active le raccourci;
-        // le pavé numérique marche aussi, s'il est en NumLock. On ignore les
-        // combinaisons avec Ctrl/Meta/Alt (raccourcis du navigateur ou
-        // caractères spéciaux).
+        // Alt + 1-9: declenche le bouton correspondant, y compris pendant
+        // la saisie dans la searchbox (avant la garde des champs editables).
+        // Touche physique (event.code): en AZERTY, la rangee "&", "é"...
+        // sans Shift ou le pavé numérique (NumLock requis). AltGr (Ctrl+Alt
+        // sous Windows) est ignore pour ne pas voler les caracteres speciaux,
+        // et Meta aussi (Cmd+N change d'onglet sous macOS).
         const digitMatch = /^(?:Digit|Numpad)([1-9])$/.exec(event.code);
-        if (digitMatch && !event.ctrlKey && !event.metaKey && !event.altKey &&
+        if (digitMatch && event.altKey && !event.ctrlKey && !event.metaKey &&
             (event.code.startsWith("Digit") || (event.getModifierState?.("NumLock") ?? true))) {
             const buttons = $$(".qse-button-container .qse-button");
             const button = buttons[Number(digitMatch[1]) - 1];
@@ -471,6 +463,14 @@ function addListeners() {
                 event.preventDefault();
                 button.click();
             }
+            return;
+        }
+
+        if (isEditableElement(document.activeElement)) return;
+
+        if (event.key === "/") {
+            $(SEARCH_INPUT_SELECTOR)?.focus();
+            event.preventDefault();
             return;
         }
 
