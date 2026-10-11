@@ -446,6 +446,22 @@ function addListeners() {
             return;
         }
 
+        // Chiffres 1-9: declenchent le bouton de raccourci correspondant.
+        // On lit event.code (touche physique) et non event.key: en AZERTY la
+        // rangée des chiffres produit "&é\"'-..." sans Shift, mais la touche
+        // physique reste Digit1-9. On ignore les combinaisons avec Ctrl/Meta/Alt
+        // (raccourcis du navigateur ou caractères spéciaux).
+        const digitMatch = /^(?:Digit|Numpad)([1-9])$/.exec(event.code);
+        if (digitMatch && !event.ctrlKey && !event.metaKey && !event.altKey) {
+            const buttons = $$(".qse-button-container .qse-button");
+            const button = buttons[Number(digitMatch[1]) - 1];
+            if (button) {
+                event.preventDefault();
+                button.click();
+            }
+            return;
+        }
+
         // Entrée ouvre le résultat sélectionné (Ctrl/Cmd+Entrée: nouvel
         // onglet). Seulement si aucun élément interactif n'a le focus, pour
         // ne pas voler les Entrée destinées à la page.
