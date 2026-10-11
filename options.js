@@ -20,6 +20,7 @@ const messages = {
   en: {
     optionsTitle: "Qwant Multi-Search — Options",
     settingsIntro: "Choose which buttons to show and drag them to change their order. Changes are saved automatically.",
+    popupIntro: "Choose which buttons to show. Changes are saved automatically.",
     wikipedia: "Wikipedia", googleNews: "Google News",
     reloadHint: "Reload Qwant to apply your changes.",
     shortcutLabel: "Shortcut",
@@ -28,6 +29,7 @@ const messages = {
   fr: {
     optionsTitle: "Qwant Multi-Search — Options",
     settingsIntro: "Choisissez les boutons à afficher et faites-les glisser pour changer leur ordre. Les changements sont enregistrés automatiquement.",
+    popupIntro: "Choisissez les boutons à afficher. Les changements sont enregistrés automatiquement.",
     wikipedia: "Wikipédia", googleNews: "Google Actualités",
     reloadHint: "Rechargez Qwant pour appliquer les changements.",
     shortcutLabel: "Raccourci",
@@ -36,6 +38,7 @@ const messages = {
   de: {
     optionsTitle: "Qwant Multi-Search — Einstellungen",
     settingsIntro: "Wähle die Schaltflächen aus und ziehe sie, um ihre Reihenfolge zu ändern. Änderungen werden automatisch gespeichert.",
+    popupIntro: "Wähle die Schaltflächen aus, die angezeigt werden sollen. Änderungen werden automatisch gespeichert.",
     wikipedia: "Wikipedia", googleNews: "Google News",
     reloadHint: "Lade Qwant neu, um deine Änderungen anzuwenden.",
     shortcutLabel: "Shortcut",
