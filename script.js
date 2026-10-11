@@ -143,6 +143,20 @@ async function initializeQwantEnhancer() {
             container.appendChild(button);
         });
 
+        // API Keyboard (Chrome/Edge desktop): afficher le caractere
+        // reellement produit par la touche physique du raccourci selon la
+        // disposition du clavier (ex. AZERTY: "&" pour Digit1). La ou l'API
+        // n'existe pas (Firefox, mobile), le badge garde le chiffre.
+        const layoutMapPromise = navigator.keyboard?.getLayoutMap?.();
+        if (layoutMapPromise) {
+            layoutMapPromise.then((layoutMap) => {
+                container.querySelectorAll("[data-shortcut]").forEach((button) => {
+                    const label = layoutMap.get(`Digit${button.dataset.shortcut}`);
+                    if (label) button.dataset.shortcut = label;
+                });
+            }).catch(() => {});
+        }
+
         // Bouton d'accès aux options: icone de l'extension fixee en bas a
         // droite (desktop uniquement, masquee par media query sur mobile).
         // runtime.openOptionsPage() n'existe pas dans un content script:

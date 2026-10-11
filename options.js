@@ -67,9 +67,31 @@ const updateShortcutNumbers = () => {
     const badge = label.querySelector(".shortcut-number");
     position += input.checked ? 1 : 0;
     badge.textContent = input.checked && position <= 9
-      ? `${message("shortcutLabel")} ${position}` : "";
+      ? `${message("shortcutLabel")} ${shortcutKeyLabels?.[position] ?? position}` : "";
   });
 };
+
+// API Keyboard (Chrome/Edge desktop): caractere produit par chaque touche
+// physique selon la disposition du clavier (ex. AZERTY: "&" pour Digit1).
+// La ou l'API n'existe pas (Firefox, mobile), on affiche le chiffre.
+let shortcutKeyLabels = null;
+
+const loadShortcutKeyLabels = () => {
+  const layoutMapPromise = navigator.keyboard?.getLayoutMap?.();
+  if (!layoutMapPromise) return;
+  layoutMapPromise.then((layoutMap) => {
+    const labels = {};
+    for (let position = 1; position <= 9; position++) {
+      const label = layoutMap.get(`Digit${position}`);
+      if (label) labels[position] = label;
+    }
+    if (Object.keys(labels).length) {
+      shortcutKeyLabels = labels;
+      updateShortcutNumbers();
+    }
+  }).catch(() => {});
+};
+loadShortcutKeyLabels();
 
 getLabels().forEach((label) => {
   const badge = document.createElement("span");
