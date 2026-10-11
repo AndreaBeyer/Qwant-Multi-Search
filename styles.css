@@ -40,7 +40,8 @@
     content: attr(data-shortcut);
     position: absolute;
     left: -10px;
-    bottom: 2px;
+    top: 50%;
+    transform: translateY(-50%);
     font: 700 9px/1 sans-serif;
     color: inherit;
     opacity: 0;
