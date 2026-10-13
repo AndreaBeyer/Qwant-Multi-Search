@@ -185,7 +185,7 @@ body[data-theme="light"] .qse-button #perplexity {
 .qse-selected::after {
     content: "";
     position: absolute;
-    inset: -8px -3px;
+    inset: -16px -3px;
     border: 2px solid #3b82f6;
     border-radius: 6px;
     pointer-events: none;
