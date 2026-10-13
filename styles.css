@@ -174,12 +174,21 @@ body[data-theme="light"] .qse-button #perplexity {
     }
 }
 
-/* Résultat sélectionné au clavier (flèches haut/bas, voir script.js):
-   liseré bleu visible aussi bien en thème clair que sombre. */
+/* Résultat sélectionné au clavier (flèches haut/bas, voir script.js).
+   Cadre bleu dessiné en surcouche (::after) plutôt qu'en outline: un
+   outline ne permet pas d'écart asymétrique, et celui-ci est plus aéré
+   verticalement qu'horizontalement. Le contenu de Qwant n'est pas décalé. */
 .qse-selected {
-    outline: 2px solid #3b82f6;
-    outline-offset: 3px;
+    position: relative;
+}
+
+.qse-selected::after {
+    content: "";
+    position: absolute;
+    inset: -5px -3px;
+    border: 2px solid #3b82f6;
     border-radius: 6px;
+    pointer-events: none;
 }
 
 /* Qwant pousse son application mobile via une bannière persistante en haut de
