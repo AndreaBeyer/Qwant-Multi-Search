@@ -4,6 +4,7 @@
 // pour réparer rapidement en cas de rupture.
 const SEARCH_INPUT_SELECTOR = 'input[type="search"]';
 const RESULT_SELECTOR = '[data-testid="SERVariant-A"]';
+const SHOW_MORE_SELECTOR = '[data-testid="buttonShowMore"]';
 const SIDEBAR_TOGGLE_SELECTOR = 'nav[tabindex="-1"] a[role="button"][href]';
 const extensionApi = globalThis.browser || globalThis.chrome;
 const browserLanguage = (extensionApi.i18n?.getUILanguage?.() || navigator.language || "").toLowerCase();
@@ -402,6 +403,18 @@ function addListeners() {
 
     const isVisible = (element) => element.getBoundingClientRect().height > 0;
 
+    // Clique le bouton "Plus de résultats" de Qwant s'il est visible. Un
+    // délai minimal évite de re-cliquer pendant le chargement de la page
+    // de résultats suivante (le bouton peut rester affiché quelques instants).
+    let lastShowMoreClickAt = 0;
+    const clickShowMore = () => {
+        const button = document.querySelector(SHOW_MORE_SELECTOR);
+        if (!button || !isVisible(button)) return;
+        if (Date.now() - lastShowMoreClickAt < 800) return;
+        lastShowMoreClickAt = Date.now();
+        button.click();
+    };
+
     // Un lien de résultat pointe vers le site externe, pas vers Qwant.
     const isExternalLink = (link) => {
         try {
@@ -518,7 +531,16 @@ function addListeners() {
         const nextIndex = event.key === "ArrowDown"
             ? currentFocus + 1
             : (currentFocus < 0 ? 0 : currentFocus - 1);
-        if (nextIndex < 0 || nextIndex >= links.length) return;
+        if (nextIndex < 0) return;
+
+        // ArrowDown depuis le dernier résultat: déclencher le bouton
+        // "Plus de résultats" de Qwant. Les nouveaux résultats arrivent
+        // en fin de liste, l'appui suivant sur ArrowDown sélectionnera
+        // le premier d'entre eux.
+        if (nextIndex >= links.length) {
+            if (event.key === "ArrowDown") clickShowMore();
+            return;
+        }
 
         if (selectResult(links, nextIndex)) currentFocus = nextIndex;
     });
