@@ -192,13 +192,22 @@ body[data-theme="light"] .qse-button #perplexity {
 }
 
 /* Carte de la Réponse Flash ou bouton "Voir la réponse détaillée"
-   sélectionnés: liseré posé sur l'élément lui-même, en box-shadow inset.
-   Les cartes vivent dans un carrousel à overflow:hidden qui rogne toute
-   surcouche externe (calque ou ::after); un liseré interne se dessine
-   dans l'élément et reste toujours visible. */
+   sélectionnés: même surcouche ::after que les résultats, mais en
+   inset: 0. Un box-shadow inset sur le lien serait recouvert par les
+   fonds des divs enfants (la carte visible), et un ::after qui dépasse
+   serait rogné par le overflow:hidden du carrousel; contenu dans
+   l'élément et peint au-dessus de son contenu, il reste visible. */
 .qse-flash-selected {
-    box-shadow: inset 0 0 0 2px #3b82f6;
+    position: relative;
+}
+
+.qse-flash-selected::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border: 2px solid #3b82f6;
     border-radius: 6px;
+    pointer-events: none;
 }
 
 /* Qwant pousse son application mobile via une bannière persistante en haut de

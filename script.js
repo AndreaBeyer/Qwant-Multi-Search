@@ -414,7 +414,9 @@ function addListeners() {
     // Debug temporaire de la navigation clavier, a retirer une fois le
     // probleme de cartes flash diagnostique: trace dans la console la liste
     // de navigation construite et la selection effectuee a chaque fleche.
-    const debugLog = (...args) => console.log("[QSE]", ...args);
+    // v2: marqueur de build pour verifier que la version chargee est bien
+    // la derniere lors des tests.
+    const debugLog = (...args) => console.log("[QSE v2]", ...args);
 
     // Clique le bouton "Plus de résultats" de Qwant s'il est visible. Un
     // délai minimal évite de re-cliquer pendant le chargement de la page
