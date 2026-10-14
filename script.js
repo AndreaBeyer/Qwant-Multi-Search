@@ -5,6 +5,11 @@
 const SEARCH_INPUT_SELECTOR = 'input[type="search"]';
 const RESULT_SELECTOR = '[data-testid="SERVariant-A"]';
 const SHOW_MORE_SELECTOR = '[data-testid="buttonShowMore"]';
+// Liens des cartes de sources de la Réponse Flash. Les classes du DOM de
+// Qwant sont régénérées à chaque build; le paramètre utm_campaign=ai_flash
+// ajouté par Qwant à ces liens est le repère stable.
+const FLASH_LINK_SELECTOR = 'a[href*="utm_campaign=ai_flash"]';
+const FLASH_CARD_SELECTOR = '[data-slide-index]';
 const SIDEBAR_TOGGLE_SELECTOR = 'nav[tabindex="-1"] a[role="button"][href]';
 const extensionApi = globalThis.browser || globalThis.chrome;
 const browserLanguage = (extensionApi.i18n?.getUILanguage?.() || navigator.language || "").toLowerCase();
@@ -439,24 +444,35 @@ function addListeners() {
         return links[Math.min(3, links.length - 1)];
     };
 
+    // Cartes de sources de la Réponse Flash, affichée au-dessus des résultats.
+    const getFlashLinks = () =>
+        Array.from($$(FLASH_LINK_SELECTOR)).filter(isVisible);
+
     const getResultLinks = () => {
+        const flashLinks = getFlashLinks();
         const containers = Array.from($$(RESULT_SELECTOR)).filter(isVisible);
         const links = containers.map(findMainLink).filter(Boolean);
-        // Repli si le data-testid de Qwant change: tous les liens externes
-        // visibles de la page.
+        // La Réponse Flash est affichée au-dessus des résultats: ses liens
+        // sont parcourus en premier, puis les résultats.
         if (links.length === 0) {
-            return Array.from(document.getElementsByTagName("a"))
+            // Repli si le data-testid de Qwant change: tous les liens externes
+            // visibles de la page. Les liens flash sont exclus de ce repli
+            // pour éviter les doublons, ils sont déjà en tête de liste.
+            return flashLinks.concat(Array.from(document.getElementsByTagName("a"))
                 .filter(isVisible)
-                .filter(isExternalLink);
+                .filter(isExternalLink)
+                .filter((link) => !link.matches(FLASH_LINK_SELECTOR)));
         }
-        return links;
+        return flashLinks.concat(links);
     };
 
     const selectResult = (links, index) => {
         const link = links[index];
         if (!link) return false;
         selectedContainer?.classList.remove("qse-selected");
-        selectedContainer = link.closest(RESULT_SELECTOR);
+        // Les cartes de la Réponse Flash ne sont pas des résultats classiques:
+        // le liseré entoure alors la carte entière ([data-slide-index]).
+        selectedContainer = link.closest(RESULT_SELECTOR) || link.closest(FLASH_CARD_SELECTOR);
         selectedContainer?.classList.add("qse-selected");
         // Pas de link.focus(): le navigateur dessinerait un cadre de focus
         // autour du titre en plus du liseré du conteneur. La touche Entrée
