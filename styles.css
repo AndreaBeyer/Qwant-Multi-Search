@@ -191,16 +191,14 @@ body[data-theme="light"] .qse-button #perplexity {
     pointer-events: none;
 }
 
-/* Cadre de sélection flottant (cartes de la Réponse Flash, bouton de
-   réponse détaillée): calque fixed appartenant à l'extension, ni rogné
-   par le overflow:hidden du carrousel de Qwant ni effacé par un re-rendu
-   de la page. Positionné par script.js. */
-.qse-selection-marker {
-    position: fixed;
-    border: 2px solid #3b82f6;
+/* Carte de la Réponse Flash ou bouton "Voir la réponse détaillée"
+   sélectionnés: liseré posé sur l'élément lui-même, en box-shadow inset.
+   Les cartes vivent dans un carrousel à overflow:hidden qui rogne toute
+   surcouche externe (calque ou ::after); un liseré interne se dessine
+   dans l'élément et reste toujours visible. */
+.qse-flash-selected {
+    box-shadow: inset 0 0 0 2px #3b82f6;
     border-radius: 6px;
-    pointer-events: none;
-    z-index: 2147483647;
 }
 
 /* Qwant pousse son application mobile via une bannière persistante en haut de

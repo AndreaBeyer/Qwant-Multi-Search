@@ -501,42 +501,9 @@ function addListeners() {
         return navigation;
     };
 
-    // Cadre de sélection flottant pour les éléments hors résultats (cartes
-    // de la Réponse Flash, bouton de réponse détaillée). Poser une classe
-    // sur l'élément de Qwant ne suffit pas ici: le overflow:hidden du
-    // carrousel rogne les surcouches, et un re-rendu de la page peut
-    // réécrire ses classes. Ce calque appartient à l'extension et suit
-    // l'élément au scroll et au redimensionnement.
-    let selectionMarker = null;
-    let markerTarget = null;
-
-    const positionSelectionMarker = () => {
-        if (!selectionMarker || !markerTarget) return;
-        const rect = markerTarget.getBoundingClientRect();
-        if (rect.width === 0 && rect.height === 0) return;
-        selectionMarker.style.left = `${Math.round(rect.left) - 4}px`;
-        selectionMarker.style.top = `${Math.round(rect.top) - 4}px`;
-        selectionMarker.style.width = `${Math.round(rect.width) + 8}px`;
-        selectionMarker.style.height = `${Math.round(rect.height) + 8}px`;
-    };
-
-    const showSelectionMarker = (target) => {
-        if (!selectionMarker || !selectionMarker.isConnected) {
-            selectionMarker = document.createElement("div");
-            selectionMarker.className = "qse-selection-marker";
-            document.documentElement.appendChild(selectionMarker);
-            window.addEventListener("scroll", positionSelectionMarker, true);
-            window.addEventListener("resize", positionSelectionMarker);
-        }
-        markerTarget = target;
-        selectionMarker.style.display = "block";
-        positionSelectionMarker();
-    };
-
-    const hideSelectionMarker = () => {
-        markerTarget = null;
-        if (selectionMarker) selectionMarker.style.display = "none";
-    };
+    // Lien hors résultat (carte flash ou bouton détaillé) portant le
+    // liseré interne actuel.
+    let selectedFlashLink = null;
 
     const selectResult = (links, index) => {
         const link = links[index];
@@ -546,15 +513,20 @@ function addListeners() {
         }
         debugLog("selection index", index, "->", link.href || `[${link.tagName}]`);
         selectedContainer?.classList.remove("qse-selected");
+        selectedFlashLink?.classList.remove("qse-flash-selected");
+        selectedFlashLink = null;
         selectedContainer = link.closest(RESULT_SELECTOR);
         if (selectedContainer) {
             selectedContainer.classList.add("qse-selected");
-            hideSelectionMarker();
         } else {
-            // Le lien est la carte tout entière (carrousel flash) ou le
-            // bouton lui-même: son rectangle est exact, celui de la slide
-            // peut depasser la zone rognée par le overflow:hidden.
-            showSelectionMarker(link);
+            // Carte de la Réponse Flash ou bouton "Voir la réponse
+            // détaillée": liseré posé directement sur le lien (la carte
+            // visible), en box-shadow inset. Contrairement à une
+            // surcouche externe (calque ou ::after), il se dessine dans
+            // l'élément et ne peut être rogné par le overflow:hidden du
+            // carrousel de Qwant.
+            selectedFlashLink = link;
+            link.classList.add("qse-flash-selected");
         }
         // Pas de link.focus(): le navigateur dessinerait un cadre de focus
         // autour du titre en plus du liseré du conteneur. La touche Entrée
@@ -620,8 +592,9 @@ function addListeners() {
         if (event.key === "Escape" && currentFocus >= 0) {
             selectedContainer?.classList.remove("qse-selected");
             selectedContainer = null;
+            selectedFlashLink?.classList.remove("qse-flash-selected");
+            selectedFlashLink = null;
             selectedLink = null;
-            hideSelectionMarker();
             currentFocus = -1;
             return;
         }
