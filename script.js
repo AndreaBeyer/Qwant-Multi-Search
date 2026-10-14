@@ -9,6 +9,10 @@ const SHOW_MORE_SELECTOR = '[data-testid="buttonShowMore"]';
 // Qwant sont régénérées à chaque build; le paramètre utm_campaign=ai_flash
 // ajouté par Qwant à ces liens est le repère stable.
 const FLASH_LINK_SELECTOR = 'a[href*="utm_campaign=ai_flash"]';
+// Slide du carrousel de la Réponse Flash: c'est lui qui contient la carte
+// réellement affichée, les autres liens ai_flash de la page sont des
+// renvois ou des gabarits non visibles.
+const FLASH_SLIDE_SELECTOR = '[data-slide-index]';
 // Bouton "Voir la réponse détaillée" de la Réponse Flash. Même logique que
 // pour les autres éléments de Qwant: son data-click-label est plus stable
 // que les classes régénérées à chaque build.
@@ -455,23 +459,29 @@ function addListeners() {
     };
 
     // Cartes de sources de la Réponse Flash, affichée au-dessus des résultats.
-    // Attention: certains rendus de Qwant ajoutent aussi le paramètre
-    // utm_campaign=ai_flash aux liens des résultats organiques; ceux-ci
-    // sont déjà couverts par le parcours des résultats, on les exclut ici
-    // pour ne pas les parcourir deux fois. Déduplication par URL au cas où
-    // Qwant rend la même carte dans deux conteneurs.
+    // Qwant rend aussi d'autres liens ai_flash avec la même URL que les
+    // cartes (renvois de citation dans le texte de la réponse, gabarits non
+    // affichés): à URL égale, on garde la carte du carrousel
+    // ([data-slide-index]), l'élément réellement visible, plutôt que la
+    // première occurrence du DOM. Les résultats organiques peuvent aussi
+    // porter le paramètre ai_flash: ils sont déjà couverts par le parcours
+    // des résultats et exclus ici.
     const getFlashLinks = () => {
-        const all = Array.from(document.querySelectorAll(FLASH_LINK_SELECTOR));
-        const links = all
+        const all = Array.from(document.querySelectorAll(FLASH_LINK_SELECTOR))
             .filter((link) => !link.closest(RESULT_SELECTOR))
             .filter(isVisible);
-        debugLog("liens ai_flash:", all.length, "trouves,", links.length, "retenus");
-        const seen = new Set();
-        return links.filter((link) => {
-            if (seen.has(link.href)) return false;
-            seen.add(link.href);
-            return true;
-        });
+        const byUrl = new Map();
+        for (const link of all) {
+            const current = byUrl.get(link.href);
+            // Une carte de carrousel gagne contre un lien hors carrousel.
+            if (!current ||
+                (!current.closest(FLASH_SLIDE_SELECTOR) && link.closest(FLASH_SLIDE_SELECTOR))) {
+                byUrl.set(link.href, link);
+            }
+        }
+        const links = Array.from(byUrl.values());
+        debugLog("liens ai_flash:", all.length, "trouves,", links.length, "cartes retenues");
+        return links;
     };
 
     // Bouton "Voir la réponse détaillée" de la Réponse Flash.
