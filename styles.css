@@ -208,6 +208,10 @@ body[data-theme="light"] .qse-button #perplexity {
     border: 2px solid #3b82f6;
     border-radius: 6px;
     pointer-events: none;
+    /* Les divs internes de la carte (favicon, titre) peuvent être
+       positionnées avec un z-index positif par Qwant et recouvriraient
+       une surcouche sans z-index. */
+    z-index: 2147483647;
 }
 
 /* Qwant pousse son application mobile via une bannière persistante en haut de

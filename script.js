@@ -529,6 +529,7 @@ function addListeners() {
             // carrousel de Qwant.
             selectedFlashLink = link;
             link.classList.add("qse-flash-selected");
+            debugLog("liseré posé sur", link.tagName, "classe:", link.className);
         }
         // Pas de link.focus(): le navigateur dessinerait un cadre de focus
         // autour du titre en plus du liseré du conteneur. La touche Entrée
