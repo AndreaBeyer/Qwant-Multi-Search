@@ -594,7 +594,15 @@ function addListeners() {
         if (isEditableElement(document.activeElement)) return;
 
         if (event.key === "/") {
-            document.querySelector(SEARCH_INPUT_SELECTOR)?.focus();
+            const input = document.querySelector(SEARCH_INPUT_SELECTOR);
+            if (input) {
+                input.focus();
+                // Apres un focus programmatique, le navigateur restaure la
+                // derniere position du curseur, parfois au debut du texte:
+                // placer le curseur a la fin pour continuer la saisie.
+                const end = input.value.length;
+                input.setSelectionRange(end, end);
+            }
             event.preventDefault();
             return;
         }
