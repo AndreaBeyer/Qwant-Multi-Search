@@ -4,6 +4,37 @@
 // pour réparer rapidement en cas de rupture.
 const SEARCH_INPUT_SELECTOR = 'input[type="search"]';
 const RESULT_SELECTOR = '[data-testid="SERVariant-A"]';
+// Cartes de la section "Vidéos" insérée parmi les résultats. Chaque carte
+// porte un lien externe (le plus souvent YouTube) directement cliquable.
+const VIDEO_CARD_SELECTOR = '[data-testid="videoCardResult"]';
+// Section "Vidéos" insérée parmi les résultats: contient le titre, la
+// pastille "Plus de vidéos" de son en-tête et le carrousel des cartes.
+const VIDEO_SECTION_SELECTOR = '[data-testid="sectionVideos"]';
+// Résultats de l'onglet Images: chaque image est une ancre interne de
+// Qwant (paramètre o) qui ouvre la visionneuse via le routage de la
+// page. Le data-testid est le repère stable.
+const IMAGE_RESULT_SELECTOR = '[data-testid="imageResult"]';
+// Barre d'actions de la visionneuse d'image ouverte: contient le lien
+// "Voir le site" vers le site source de l'image.
+const IMAGE_DRAWER_ACTIONS_SELECTOR = '[data-testid="imageDrawerActions"]';
+// Liens "Plus de vidéos" vers l'onglet vidéos de la recherche: liens
+// internes de Qwant (paramètre d'URL t=videos). Qwant rend plusieurs
+// ancres avec cette URL: la pastille de l'en-tête de la section (celle
+// que l'on voit, à côté du titre) et un bouton "Tout afficher" à la fin
+// du carrousel (data-testid showAllVideosButton), décalé hors champ
+// tant que le carrousel n'est pas défilé jusqu'au bout. Une recherche
+// globale des liens t=videos attraperait aussi l'onglet "Vidéos" de la
+// barre de navigation: les candidates sont bornées à la section (voir
+// getVideoMoreLinks).
+const VIDEO_MORE_SELECTOR = 'a[href*="t=videos"]';
+// Onglets de catégories de la recherche (Tous, Chat IA, Images, Vidéos,
+// Actualités, Shopping). Le data-click-label tab_bar_item_* est stable
+// d'un build à l'autre (même logique que le bouton "Voir la réponse
+// détaillée"), et l'onglet actif porte aria-current="page". Les URL des
+// onglets contiennent des paramètres de suivi (entry_point, t) absents
+// de la barre d'adresse: la comparaison d'URL n'est pas fiable, on cible
+// les attributs.
+const TAB_ITEM_SELECTOR = '[data-click-label^="tab_bar_item_"]';
 const SHOW_MORE_SELECTOR = '[data-testid="buttonShowMore"]';
 // Liens des cartes de sources de la Réponse Flash. Les classes du DOM de
 // Qwant sont régénérées à chaque build; le paramètre utm_campaign=ai_flash
@@ -490,11 +521,129 @@ function addListeners() {
     const getRelatedSearchLinks = () =>
         Array.from(document.querySelectorAll(RELATED_SEARCH_SELECTOR)).filter(isVisible);
 
+    // Onglets de catégories de la recherche (Tous, Chat IA, Images,
+    // Vidéos, Actualités, Shopping), dans l'ordre de la barre (l'ordre
+    // du DOM suit l'ordre visuel).
+    const getCategoryTabs = () =>
+        Array.from(document.querySelectorAll(TAB_ITEM_SELECTOR)).filter(isVisible);
+
+    // Page du chat (onglet Chat IA): la navigation clavier des résultats
+    // n'y a pas de sens, les flèches haut/bas doivent garder le
+    // défilement natif de la conversation. L'URL de l'onglet chat porte
+    // t=chat; en repli, l'onglet actif de la barre de catégories.
+    const isChatPage = () => {
+        try {
+            if (new URL(window.location.href).searchParams.get("t") === "chat") return true;
+        } catch (error) {
+            // URL illisible: essayer la barre d'onglets.
+        }
+        return Boolean(document.querySelector('[data-testid="chatNavItem"][aria-current]'));
+    };
+
+    // Lien "Plus de vidéos" de la section vidéos. Qwant rend plusieurs
+    // ancres avec la même URL: la pastille de l'en-tête de la section et
+    // le bouton "Tout afficher" à la fin du carrousel. Le bouton du
+    // carrousel est décalé hors champ par le défilement: sa hauteur
+    // reste positive, le test isVisible ne suffit pas à l'écarter, on
+    // filtre en plus sur la position réelle dans la fenêtre. À URL
+    // égale, le premier candidat du DOM l'emporte: la pastille de
+    // l'en-tête, celle que l'on voit.
+    const getVideoMoreLinks = () => {
+        const isOnScreen = (element) => {
+            const bounds = element.getBoundingClientRect();
+            return bounds.left < window.innerWidth && bounds.right > 0;
+        };
+        const isValid = (link) => {
+            if (!isVisible(link) || link.closest(RESULT_SELECTOR) || link.closest(VIDEO_CARD_SELECTOR)) return false;
+            // Jamais dans l'en-tête ni la navigation de la page.
+            if (link.closest("header, nav")) return false;
+            try {
+                const url = new URL(link.href);
+                if (!url.hostname.endsWith("qwant.com") || url.searchParams.get("t") !== "videos") return false;
+            } catch (error) {
+                return false;
+            }
+            return true;
+        };
+        // Candidats bornés à la section vidéos (repli si son data-testid
+        // change: les ancêtres des cartes sans passer par body, sinon
+        // l'onglet "Vidéos" de la barre de navigation serait attrapé).
+        let candidates = [];
+        const sections = Array.from(document.querySelectorAll(VIDEO_SECTION_SELECTOR))
+            .filter((section) => section.querySelector(VIDEO_CARD_SELECTOR));
+        if (sections.length > 0) {
+            for (const section of sections) {
+                for (const link of section.querySelectorAll(VIDEO_MORE_SELECTOR)) {
+                    if (isValid(link)) candidates.push(link);
+                }
+            }
+        } else {
+            const found = new Set();
+            for (const card of document.querySelectorAll(VIDEO_CARD_SELECTOR)) {
+                for (let scope = card.parentElement; scope && scope !== document.body; scope = scope.parentElement) {
+                    for (const link of scope.querySelectorAll(VIDEO_MORE_SELECTOR)) {
+                        if (isValid(link)) found.add(link);
+                    }
+                }
+            }
+            candidates = Array.from(found);
+        }
+        const onScreen = candidates.filter(isOnScreen);
+        const kept = onScreen.length > 0 ? onScreen : candidates;
+        const byUrl = new Map();
+        for (const link of kept) {
+            if (!byUrl.has(link.href)) byUrl.set(link.href, link);
+        }
+        return Array.from(byUrl.values());
+    };
+
+    // Lien "Voir le site" de la visionneuse d'image: le premier lien
+    // externe de sa barre d'actions (le bouton Partager et l'ouverture
+    // plein écran de l'image sont respectivement un bouton et un lien
+    // d'image, pas un lien vers le site source).
+    const getImageDrawerSiteLink = () => {
+        const actions = document.querySelector(IMAGE_DRAWER_ACTIONS_SELECTOR);
+        if (!actions) return null;
+        const link = Array.from(actions.getElementsByTagName("a")).find(isExternalLink);
+        return link && isVisible(link) ? link : null;
+    };
+
     const getResultLinks = () => {
         const detailedAnswerButton = getDetailedAnswerButton();
         const flashLinks = getFlashLinks();
-        const containers = Array.from(document.querySelectorAll(RESULT_SELECTOR)).filter(isVisible);
-        const links = containers.map(findMainLink).filter(Boolean);
+        const videoMoreLinksList = getVideoMoreLinks();
+        // Les cartes vidéos sont insérées parmi les résultats (carrousel
+        // de la section "Vidéos"): on fusionne résultats et cartes dans
+        // l'ordre du DOM pour que la navigation suive l'ordre réel de la
+        // page. Une carte vidéo imbriquée dans un résultat est déjà
+        // couverte par ce résultat.
+        const sorted = Array.from(document.querySelectorAll(RESULT_SELECTOR))
+            .map((container) => ({ element: container, link: findMainLink(container) }))
+            .concat(Array.from(document.querySelectorAll(VIDEO_CARD_SELECTOR))
+                .filter((card) => !card.closest(RESULT_SELECTOR))
+                .map((card) => ({ element: card, link: findMainLink(card) })))
+            // Résultats d'images (onglet Images): l'ancre est le lien,
+            // pas de conteneur à parcourir.
+            .concat(Array.from(document.querySelectorAll(IMAGE_RESULT_SELECTOR))
+                .filter((link) => !link.closest(RESULT_SELECTOR))
+                .filter(isVisible)
+                .map((link) => ({ element: link, link })))
+            .filter((item) => item.link && isVisible(item.element))
+            .sort((a, b) =>
+                a.element.compareDocumentPosition(b.element) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1);
+        // La pastille "Plus de vidéos" vit dans l'en-tête de la section,
+        // avant le carrousel dans le DOM, mais se parcourt APRÈS les
+        // vidéos: l'insérer juste après la dernière carte vidéo. Sans
+        // carte vidéo, elle reste à la fin de la liste.
+        let lastCardIndex = -1;
+        for (let i = 0; i < sorted.length; i++) {
+            if (sorted[i].element.matches(VIDEO_CARD_SELECTOR)) lastCardIndex = i;
+        }
+        const moreEntries = videoMoreLinksList.map((link) => ({ element: link, link }));
+        const navigable = lastCardIndex >= 0
+            ? sorted.slice(0, lastCardIndex + 1).concat(moreEntries, sorted.slice(lastCardIndex + 1))
+            : sorted.concat(moreEntries);
+        const links = navigable.map((item) => item.link);
         // Repli si le data-testid de Qwant change: tous les liens externes
         // visibles de la page. Les liens flash sont exclus de ce repli
         // pour éviter les doublons, ils sont déjà dans la liste.
@@ -503,11 +652,16 @@ function addListeners() {
             .filter(isExternalLink)
             .filter((link) => !link.matches(FLASH_LINK_SELECTOR));
         // Ordre de navigation: cartes de la Réponse Flash, puis le bouton
-        // "Voir la réponse détaillée" juste après, puis les résultats, et
-        // enfin les recherches associées "Pour aller plus loin". Un appui
-        // supplémentaire au-delà de la dernière déclenche "Plus de
-        // résultats".
-        const items = flashLinks.slice();
+        // "Voir la réponse détaillée" juste après, puis les résultats,
+        // cartes vidéos et résultats d'images (à leur place dans la
+        // page), et enfin les recherches associées "Pour aller plus
+        // loin". Un appui supplémentaire au-delà de la dernière
+        // déclenche "Plus de résultats".
+        // Visionneuse d'image ouverte: son lien "Voir le site" se parcourt
+        // en tête, la visionneuse recouvre la page.
+        const imageDrawerSiteLink = getImageDrawerSiteLink();
+        const items = imageDrawerSiteLink ? [imageDrawerSiteLink] : [];
+        items.push(...flashLinks);
         if (detailedAnswerButton) items.push(detailedAnswerButton);
         return items.concat(resultLinks, getRelatedSearchLinks());
     };
@@ -526,11 +680,12 @@ function addListeners() {
         if (selectedContainer) {
             selectedContainer.classList.add("qse-selected");
         } else {
-            // Carte de la Réponse Flash ou bouton "Voir la réponse
-            // détaillée": liseré posé directement sur le lien (la carte
-            // visible), en surcouche ::after bornée à l'élément (voir
-            // .qse-flash-selected dans styles.css) pour échapper au
-            // overflow:hidden du carrousel de Qwant.
+            // Carte de la Réponse Flash, carte vidéo du carrousel ou
+            // bouton "Voir la réponse détaillée": liseré posé
+            // directement sur le lien (la carte visible), en surcouche
+            // ::after bornée à l'élément (voir .qse-flash-selected dans
+            // styles.css) pour échapper au overflow:hidden du carrousel
+            // de Qwant.
             selectedFlashLink = link;
             link.classList.add("qse-flash-selected");
         }
@@ -551,6 +706,25 @@ function addListeners() {
         selectedFlashLink = null;
         selectedLink = null;
         currentFocus = -1;
+    };
+
+    // Après l'ouverture de la visionneuse d'image, la sélection passe à
+    // son lien "Voir le site": Entrée à nouveau ouvre le site source.
+    // Le rendu de la visionneuse peut prendre quelques images:
+    // réessayer jusqu'à ce que le lien apparaisse.
+    const focusImageDrawerSiteLink = () => {
+        let attempts = 0;
+        const trySelect = () => {
+            const link = getImageDrawerSiteLink();
+            if (link) {
+                const links = getResultLinks();
+                const index = links.indexOf(link);
+                if (index >= 0) selectResult(links, index);
+                return;
+            }
+            if (++attempts < 30) window.requestAnimationFrame(trySelect);
+        };
+        trySelect();
     };
 
     // Entrer dans la barre de recherche abandonne la navigation clavier:
@@ -616,16 +790,50 @@ function addListeners() {
             return;
         }
 
+        // Flèches gauche/droite: basculer entre les catégories de la
+        // recherche (Tous, Chat IA, Images, Vidéos, Actualités,
+        // Shopping), avec rebouclage aux extrémités. Ces flèches ne
+        // servent à rien d'autre sur la page de résultats. Sans
+        // modificateur: Alt+Flèche (historique) et les autres
+        // combinaisons restent au navigateur. Un clic sur l'onglet
+        // plutôt que location.href: laisse le routage interne de Qwant
+        // opérer sans recharger la page.
+        if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+            if (!event.altKey && !event.ctrlKey && !event.metaKey && !event.shiftKey) {
+                const tabs = getCategoryTabs();
+                const currentIndex = tabs.findIndex((tab) =>
+                    tab.getAttribute("aria-current") !== null);
+                if (tabs.length > 1 && currentIndex >= 0) {
+                    const nextIndex = event.key === "ArrowRight"
+                        ? (currentIndex + 1) % tabs.length
+                        : (currentIndex - 1 + tabs.length) % tabs.length;
+                    event.preventDefault();
+                    tabs[nextIndex].click();
+                }
+            }
+            return;
+        }
+
         // Entrée ouvre le résultat sélectionné (Ctrl/Cmd+Entrée: nouvel
         // onglet). Le bouton "Voir la réponse détaillée" n'est pas un lien:
         // Entrée le déclenche comme un clic. Seulement si aucun élément
         // interactif n'a le focus, pour ne pas voler les Entrée destinées
-        // à la page.
-        if (event.key === "Enter" && selectedLink &&
-            (!document.activeElement || document.activeElement === document.body)) {
+        // à la page. Qwant rend le conteneur de la visionneuse d'image
+        // focusable (tabindex="-1") et peut lui donner le focus: un
+        // élément non interactif focusable ne traite pas Entrée, on ne
+        // teste que la nature interactive de l'élément actif.
+        const activeElementIsInteractive = (element) =>
+            Boolean(element?.closest?.("a, button, input, textarea, select, [role='button']"));
+        if (event.key === "Enter" && selectedLink && !activeElementIsInteractive(document.activeElement)) {
             event.preventDefault();
             if (!selectedLink.href) {
                 selectedLink.click();
+            } else if (selectedLink.matches(IMAGE_RESULT_SELECTOR)) {
+                // Résultat d'image: la visionneuse s'ouvre par le routage
+                // interne de Qwant, un clic plutôt qu'une navigation, puis
+                // la sélection passe à son lien "Voir le site".
+                selectedLink.click();
+                focusImageDrawerSiteLink();
             } else if (event.ctrlKey || event.metaKey) {
                 window.open(selectedLink.href, "_blank");
             } else {
@@ -641,10 +849,17 @@ function addListeners() {
         }
 
         if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
-        event.preventDefault();
+
+        // Onglet Chat IA: pas de navigation clavier des résultats, les
+        // flèches gardent le défilement natif de la conversation.
+        if (isChatPage()) return;
 
         const links = getResultLinks();
+        // Pas de preventDefault tant que la navigation ne sélectionnera
+        // rien: le défilement natif de la page doit continuer de
+        // fonctionner quand il n'y a rien à parcourir.
         if (links.length === 0) return;
+        event.preventDefault();
 
         // ArrowUp sur le premier résultat ne fait rien; ArrowDown/ArrowUp
         // depuis aucun résultat sélectionné ciblent le premier.

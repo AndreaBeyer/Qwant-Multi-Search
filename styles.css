@@ -191,14 +191,22 @@ body[data-theme="light"] .qse-button #perplexity {
     pointer-events: none;
 }
 
-/* Carte de la Réponse Flash ou bouton "Voir la réponse détaillée"
-   sélectionnés: même surcouche ::after que les résultats, mais en
-   inset: 0. Un box-shadow inset sur le lien serait recouvert par les
-   fonds des divs enfants (la carte visible), et un ::after qui dépasse
-   serait rogné par le overflow:hidden du carrousel; contenu dans
-   l'élément et peint au-dessus de son contenu, il reste visible. */
+/* Carte de la Réponse Flash, carte vidéo ou bouton "Plus de vidéos" /
+   "Voir la réponse détaillée" sélectionnés: même surcouche ::after que
+   les résultats, mais en inset: 0. Un box-shadow inset sur le lien
+   serait recouvert par les fonds des divs enfants (la carte visible),
+   et un ::after qui dépasse serait rogné par le overflow:hidden du
+   carrousel; contenu dans l'élément et peint au-dessus de son contenu,
+   il reste visible. */
 .qse-flash-selected {
     position: relative;
+    /* L'outline en doublon du ::after est un secours pour les éléments
+       dont Qwant empêche la surcouche de se peindre (empilement propre
+       au composant): l'outline est tracé par la boîte elle-même, suit
+       son rayon et ne dépend d'aucun descendant. Décalé vers
+       l'intérieur, il se superpose exactement au ::after. */
+    outline: 2px solid #3b82f6;
+    outline-offset: -2px;
 }
 
 .qse-flash-selected::after {
