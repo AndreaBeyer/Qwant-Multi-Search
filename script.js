@@ -415,13 +415,6 @@ function addListeners() {
 
     const isVisible = (element) => element.getBoundingClientRect().height > 0;
 
-    // Debug temporaire de la navigation clavier, a retirer une fois le
-    // probleme de cartes flash diagnostique: trace dans la console la liste
-    // de navigation construite et la selection effectuee a chaque fleche.
-    // v2: marqueur de build pour verifier que la version chargee est bien
-    // la derniere lors des tests.
-    const debugLog = (...args) => console.log("[QSE v2]", ...args);
-
     // Clique le bouton "Plus de résultats" de Qwant s'il est visible. Un
     // délai minimal évite de re-cliquer pendant le chargement de la page
     // de résultats suivante (le bouton peut rester affiché quelques instants).
@@ -480,7 +473,6 @@ function addListeners() {
             }
         }
         const links = Array.from(byUrl.values());
-        debugLog("liens ai_flash:", all.length, "trouves,", links.length, "cartes retenues");
         return links;
     };
 
@@ -508,9 +500,7 @@ function addListeners() {
         // un tri par position ne ferait donc pas ce que l'on veut.
         const items = flashLinks.slice();
         if (detailedAnswerButton) items.push(detailedAnswerButton);
-        const navigation = items.concat(resultLinks);
-        debugLog("navigation:", navigation.map((item) => item.href || `[${item.tagName}]`));
-        return navigation;
+        return items.concat(resultLinks);
     };
 
     // Lien hors résultat (carte flash ou bouton détaillé) portant le
@@ -519,11 +509,7 @@ function addListeners() {
 
     const selectResult = (links, index) => {
         const link = links[index];
-        if (!link) {
-            debugLog("selection: aucun element a l'index", index);
-            return false;
-        }
-        debugLog("selection index", index, "->", link.href || `[${link.tagName}]`);
+        if (!link) return false;
         selectedContainer?.classList.remove("qse-selected");
         selectedFlashLink?.classList.remove("qse-flash-selected");
         selectedFlashLink = null;
@@ -533,13 +519,11 @@ function addListeners() {
         } else {
             // Carte de la Réponse Flash ou bouton "Voir la réponse
             // détaillée": liseré posé directement sur le lien (la carte
-            // visible), en box-shadow inset. Contrairement à une
-            // surcouche externe (calque ou ::after), il se dessine dans
-            // l'élément et ne peut être rogné par le overflow:hidden du
-            // carrousel de Qwant.
+            // visible), en surcouche ::after bornée à l'élément (voir
+            // .qse-flash-selected dans styles.css) pour échapper au
+            // overflow:hidden du carrousel de Qwant.
             selectedFlashLink = link;
             link.classList.add("qse-flash-selected");
-            debugLog("liseré posé sur", link.tagName, "classe:", link.className);
         }
         // Pas de link.focus(): le navigateur dessinerait un cadre de focus
         // autour du titre en plus du liseré du conteneur. La touche Entrée
