@@ -10,6 +10,10 @@ const SHOW_MORE_SELECTOR = '[data-testid="buttonShowMore"]';
 // ajouté par Qwant à ces liens est le repère stable.
 const FLASH_LINK_SELECTOR = 'a[href*="utm_campaign=ai_flash"]';
 const FLASH_CARD_SELECTOR = '[data-slide-index]';
+// Bouton "Voir la réponse détaillée" de la Réponse Flash. Même logique que
+// pour les autres éléments de Qwant: son data-click-label est plus stable
+// que les classes régénérées à chaque build.
+const DETAILED_ANSWER_SELECTOR = '[data-click-label="Llm_See_Detailed_Answer"]';
 const SIDEBAR_TOGGLE_SELECTOR = 'nav[tabindex="-1"] a[role="button"][href]';
 const extensionApi = globalThis.browser || globalThis.chrome;
 const browserLanguage = (extensionApi.i18n?.getUILanguage?.() || navigator.language || "").toLowerCase();
@@ -448,22 +452,33 @@ function addListeners() {
     const getFlashLinks = () =>
         Array.from($$(FLASH_LINK_SELECTOR)).filter(isVisible);
 
+    // Bouton "Voir la réponse détaillée" de la Réponse Flash.
+    const getDetailedAnswerButton = () => {
+        const button = document.querySelector(DETAILED_ANSWER_SELECTOR);
+        return button && isVisible(button) ? button : null;
+    };
+
     const getResultLinks = () => {
+        const detailedAnswerButton = getDetailedAnswerButton();
         const flashLinks = getFlashLinks();
         const containers = Array.from($$(RESULT_SELECTOR)).filter(isVisible);
         const links = containers.map(findMainLink).filter(Boolean);
-        // La Réponse Flash est affichée au-dessus des résultats: ses liens
-        // sont parcourus en premier, puis les résultats.
-        if (links.length === 0) {
-            // Repli si le data-testid de Qwant change: tous les liens externes
-            // visibles de la page. Les liens flash sont exclus de ce repli
-            // pour éviter les doublons, ils sont déjà en tête de liste.
-            return flashLinks.concat(Array.from(document.getElementsByTagName("a"))
-                .filter(isVisible)
-                .filter(isExternalLink)
-                .filter((link) => !link.matches(FLASH_LINK_SELECTOR)));
-        }
-        return flashLinks.concat(links);
+        // Repli si le data-testid de Qwant change: tous les liens externes
+        // visibles de la page. Les liens flash sont exclus de ce repli
+        // pour éviter les doublons, ils sont déjà dans la liste.
+        const resultLinks = links.length > 0 ? links : Array.from(document.getElementsByTagName("a"))
+            .filter(isVisible)
+            .filter(isExternalLink)
+            .filter((link) => !link.matches(FLASH_LINK_SELECTOR));
+        const items = flashLinks.concat(resultLinks);
+        if (detailedAnswerButton) items.push(detailedAnswerButton);
+        // Ordre visuel de la page: le bouton de réponse détaillée et les
+        // cartes flash ne sont pas des résultats classiques et leur place
+        // dans le DOM peut changer. Le tri est stable, les liens de
+        // résultats conservent donc leur ordre relatif.
+        items.sort((a, b) =>
+            (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING) ? -1 : 0);
+        return items;
     };
 
     const selectResult = (links, index) => {
@@ -471,8 +486,9 @@ function addListeners() {
         if (!link) return false;
         selectedContainer?.classList.remove("qse-selected");
         // Les cartes de la Réponse Flash ne sont pas des résultats classiques:
-        // le liseré entoure alors la carte entière ([data-slide-index]).
-        selectedContainer = link.closest(RESULT_SELECTOR) || link.closest(FLASH_CARD_SELECTOR);
+        // le liseré entoure alors la carte entière ([data-slide-index]), ou
+        // le bouton lui-même pour la réponse détaillée.
+        selectedContainer = link.closest(RESULT_SELECTOR) || link.closest(FLASH_CARD_SELECTOR) || link.closest("button");
         selectedContainer?.classList.add("qse-selected");
         // Pas de link.focus(): le navigateur dessinerait un cadre de focus
         // autour du titre en plus du liseré du conteneur. La touche Entrée
@@ -517,13 +533,20 @@ function addListeners() {
         }
 
         // Entrée ouvre le résultat sélectionné (Ctrl/Cmd+Entrée: nouvel
-        // onglet). Seulement si aucun élément interactif n'a le focus, pour
-        // ne pas voler les Entrée destinées à la page.
+        // onglet). Le bouton "Voir la réponse détaillée" n'est pas un lien:
+        // Entrée le déclenche comme un clic. Seulement si aucun élément
+        // interactif n'a le focus, pour ne pas voler les Entrée destinées
+        // à la page.
         if (event.key === "Enter" && selectedLink &&
             (!document.activeElement || document.activeElement === document.body)) {
             event.preventDefault();
-            if (event.ctrlKey || event.metaKey) $openBlank(selectedLink.href);
-            else $open(selectedLink.href);
+            if (!selectedLink.href) {
+                selectedLink.click();
+            } else if (event.ctrlKey || event.metaKey) {
+                $openBlank(selectedLink.href);
+            } else {
+                $open(selectedLink.href);
+            }
             return;
         }
 
