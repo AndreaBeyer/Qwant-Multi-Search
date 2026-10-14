@@ -9,7 +9,6 @@ const SHOW_MORE_SELECTOR = '[data-testid="buttonShowMore"]';
 // Qwant sont régénérées à chaque build; le paramètre utm_campaign=ai_flash
 // ajouté par Qwant à ces liens est le repère stable.
 const FLASH_LINK_SELECTOR = 'a[href*="utm_campaign=ai_flash"]';
-const FLASH_CARD_SELECTOR = '[data-slide-index]';
 // Bouton "Voir la réponse détaillée" de la Réponse Flash. Même logique que
 // pour les autres éléments de Qwant: son data-click-label est plus stable
 // que les classes régénérées à chaque build.
