@@ -449,8 +449,18 @@ function addListeners() {
     };
 
     // Cartes de sources de la Réponse Flash, affichée au-dessus des résultats.
-    const getFlashLinks = () =>
-        Array.from(document.querySelectorAll(FLASH_LINK_SELECTOR)).filter(isVisible);
+    // Dédupliquées par URL au cas où Qwant rend la même carte dans deux
+    // conteneurs (un seul liseré, une seule étape de navigation par carte).
+    const getFlashLinks = () => {
+        const seen = new Set();
+        return Array.from(document.querySelectorAll(FLASH_LINK_SELECTOR))
+            .filter(isVisible)
+            .filter((link) => {
+                if (seen.has(link.href)) return false;
+                seen.add(link.href);
+                return true;
+            });
+    };
 
     // Bouton "Voir la réponse détaillée" de la Réponse Flash.
     const getDetailedAnswerButton = () => {

@@ -191,6 +191,19 @@ body[data-theme="light"] .qse-button #perplexity {
     pointer-events: none;
 }
 
+/* Cartes de la Réponse Flash: la surcouche ::after est rognée par le
+   overflow: hidden du carrousel de Qwant (piste en translate3d), le cadre
+   n'y serait pas visible. On la remplace par un liseré interne (box-shadow
+   inset), insensible au rognage. */
+[data-slide-index].qse-selected::after {
+    content: none;
+}
+
+[data-slide-index].qse-selected {
+    box-shadow: inset 0 0 0 2px #3b82f6;
+    border-radius: 6px;
+}
+
 /* Qwant pousse son application mobile via une bannière persistante en haut de
    l'écran (smartbanner) et une carte dédiée sur la page d'accueil. Les classes
    de Qwant sont régénérées à chaque build, on cible donc les liens vers le
