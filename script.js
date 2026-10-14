@@ -17,6 +17,9 @@ const FLASH_SLIDE_SELECTOR = '[data-slide-index]';
 // pour les autres éléments de Qwant: son data-click-label est plus stable
 // que les classes régénérées à chaque build.
 const DETAILED_ANSWER_SELECTOR = '[data-click-label="Llm_See_Detailed_Answer"]';
+// Recherches associees "Pour aller plus loin", affichees sous les resultats:
+// elles sont parcourues a la fin de la navigation.
+const RELATED_SEARCH_SELECTOR = '[data-testid="relatedSearchLink"]';
 const SIDEBAR_TOGGLE_SELECTOR = 'nav[tabindex="-1"] a[role="button"][href]';
 const extensionApi = globalThis.browser || globalThis.chrome;
 const browserLanguage = (extensionApi.i18n?.getUILanguage?.() || navigator.language || "").toLowerCase();
@@ -482,6 +485,11 @@ function addListeners() {
         return button && isVisible(button) ? button : null;
     };
 
+    // Recherches associees "Pour aller plus loin": liens internes de Qwant
+    // (vers une nouvelle recherche), parcourus apres les resultats.
+    const getRelatedSearchLinks = () =>
+        Array.from(document.querySelectorAll(RELATED_SEARCH_SELECTOR)).filter(isVisible);
+
     const getResultLinks = () => {
         const detailedAnswerButton = getDetailedAnswerButton();
         const flashLinks = getFlashLinks();
@@ -495,12 +503,13 @@ function addListeners() {
             .filter(isExternalLink)
             .filter((link) => !link.matches(FLASH_LINK_SELECTOR));
         // Ordre de navigation: cartes de la Réponse Flash, puis le bouton
-        // "Voir la réponse détaillée" juste après, puis les résultats. Le
-        // bouton apparaît après la page de résultats dans le DOM de Qwant,
-        // un tri par position ne ferait donc pas ce que l'on veut.
+        // "Voir la réponse détaillée" juste après, puis les résultats, et
+        // enfin les recherches associées "Pour aller plus loin". Un appui
+        // supplémentaire au-delà de la dernière déclenche "Plus de
+        // résultats".
         const items = flashLinks.slice();
         if (detailedAnswerButton) items.push(detailedAnswerButton);
-        return items.concat(resultLinks);
+        return items.concat(resultLinks, getRelatedSearchLinks());
     };
 
     // Lien hors résultat (carte flash ou bouton détaillé) portant le
