@@ -412,19 +412,6 @@ function addListeners() {
 
     const isVisible = (element) => element.getBoundingClientRect().height > 0;
 
-    // Vraiment affiché à l'écran, pas seulement de hauteur > 0: détecte les
-    // copies rendues derrière un autre calque ou masquées (visibility,
-    // opacity), qu'isVisible ne voit pas. Utilisé pour les cartes flash.
-    const isOnScreen = (element) => {
-        const rect = element.getBoundingClientRect();
-        if (rect.height === 0) return false;
-        const hit = document.elementFromPoint(
-            Math.round(rect.left + rect.width / 2),
-            Math.round(rect.top + rect.height / 2)
-        );
-        return Boolean(hit && (hit === element || element.contains(hit)));
-    };
-
     // Clique le bouton "Plus de résultats" de Qwant s'il est visible. Un
     // délai minimal évite de re-cliquer pendant le chargement de la page
     // de résultats suivante (le bouton peut rester affiché quelques instants).
@@ -462,17 +449,17 @@ function addListeners() {
     };
 
     // Cartes de sources de la Réponse Flash, affichée au-dessus des résultats.
-    // Dédupliquées par URL au cas où Qwant rend la même carte dans deux
-    // conteneurs (un seul cadre, une seule étape de navigation par carte).
+    // Attention: certains rendus de Qwant ajoutent aussi le paramètre
+    // utm_campaign=ai_flash aux liens des résultats organiques; ceux-ci
+    // sont déjà couverts par le parcours des résultats, on les exclut ici
+    // pour ne pas les parcourir deux fois. Déduplication par URL au cas où
+    // Qwant rend la même carte dans deux conteneurs.
     const getFlashLinks = () => {
-        const links = Array.from(document.querySelectorAll(FLASH_LINK_SELECTOR));
-        const onScreen = links.filter(isOnScreen);
-        // Repli: si le test elementFromPoint n'en reconnaît aucune (par
-        // exemple à cause d'un calque transparent par-dessus), on garde les
-        // liens de hauteur > 0 plutôt que de perdre la navigation.
-        const candidates = onScreen.length > 0 ? onScreen : links.filter(isVisible);
+        const links = Array.from(document.querySelectorAll(FLASH_LINK_SELECTOR))
+            .filter((link) => !link.closest(RESULT_SELECTOR))
+            .filter(isVisible);
         const seen = new Set();
-        return candidates.filter((link) => {
+        return links.filter((link) => {
             if (seen.has(link.href)) return false;
             seen.add(link.href);
             return true;
@@ -552,7 +539,10 @@ function addListeners() {
             selectedContainer.classList.add("qse-selected");
             hideSelectionMarker();
         } else {
-            showSelectionMarker(link.closest(FLASH_CARD_SELECTOR) || link.closest("button") || link);
+            // Le lien est la carte tout entière (carrousel flash) ou le
+            // bouton lui-même: son rectangle est exact, celui de la slide
+            // peut depasser la zone rognée par le overflow:hidden.
+            showSelectionMarker(link);
         }
         // Pas de link.focus(): le navigateur dessinerait un cadre de focus
         // autour du titre en plus du liseré du conteneur. La touche Entrée
