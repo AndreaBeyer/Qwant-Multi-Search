@@ -542,6 +542,29 @@ function addListeners() {
         return true;
     };
 
+    // Abandonne la navigation clavier: retire le liseré et oublie le lien
+    // selectionne, pour qu'Entree ne l'ouvre plus.
+    const clearSelection = () => {
+        selectedContainer?.classList.remove("qse-selected");
+        selectedContainer = null;
+        selectedFlashLink?.classList.remove("qse-flash-selected");
+        selectedFlashLink = null;
+        selectedLink = null;
+        currentFocus = -1;
+    };
+
+    // Entrer dans la barre de recherche abandonne la navigation clavier:
+    // sinon, Entree dans la searchbox peut ouvrir le lien selectionne au
+    // lieu de lancer la recherche (en particulier si Qwant re-render la
+    // page pendant la saisie et rend le focus au body). L'evenement
+    // "input" couvre aussi une saisie demarree sans focus detectable.
+    document.addEventListener("focusin", (event) => {
+        if (event.target?.matches?.(SEARCH_INPUT_SELECTOR)) clearSelection();
+    });
+    document.addEventListener("input", (event) => {
+        if (event.target?.matches?.(SEARCH_INPUT_SELECTOR)) clearSelection();
+    });
+
     document.addEventListener("keydown", (event) => {
         // Appui sur Alt: afficher les badges de raccourci (Alt+1-9). La
         // classe est retiree au relachement (keyup) et au blur de la
@@ -596,12 +619,7 @@ function addListeners() {
 
         // Escape quitte la navigation clavier et rend le focus à la page.
         if (event.key === "Escape" && currentFocus >= 0) {
-            selectedContainer?.classList.remove("qse-selected");
-            selectedContainer = null;
-            selectedFlashLink?.classList.remove("qse-flash-selected");
-            selectedFlashLink = null;
-            selectedLink = null;
-            currentFocus = -1;
+            clearSelection();
             return;
         }
 
