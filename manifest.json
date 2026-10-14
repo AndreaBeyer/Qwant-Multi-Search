@@ -51,7 +51,6 @@
       ],
       "run_at": "document_start",
       "js": [
-        "helpers.js",
         "script.js"
       ],
       "css": [

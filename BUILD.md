@@ -31,7 +31,7 @@ Aucune dépendance externe : uniquement la bibliothèque standard Python (`json`
 
 ### Déroulé pas à pas
 
-1. **Validation des sources** (`validate_source`) — le script vérifie que tous les fichiers requis sont présents (`manifest.json`, `background.js`, `helpers.js`, `script.js`, `styles.css`, `popup.html`, `options.*`, `_locales`). S'il en manque un seul, il échoue immédiatement avec un message clair, avant toute écriture.
+1. **Validation des sources** (`validate_source`) — le script vérifie que tous les fichiers requis sont présents (`manifest.json`, `background.js`, `script.js`, `styles.css`, `popup.html`, `options.*`, `_locales`). S'il en manque un seul, il échoue immédiatement avec un message clair, avant toute écriture.
 2. **Lecture de la version** (`get_version`) — la version est lue directement dans `manifest.json` (`"version": "x.y.z"`). C'est la seule source de vérité : les ZIP sont toujours nommés avec la version réelle de l'extension.
 3. **Nettoyage** — si `dist/` existe, il est supprimé intégralement puis recréé. Les builds sont toujours reproductibles depuis zéro.
 4. **Copie sélective** (`copy_directory`) — les fichiers sources sont copiés récursivement dans `dist/chrome` et `dist/firefox`, en excluant tout ce qui ne doit pas être distribué :

@@ -32,7 +32,6 @@ EXCLUDE_FILES = {
 REQUIRED_FILES = [
     'manifest.json',
     'background.js',
-    'helpers.js',
     'script.js',
     'styles.css',
     'popup.html',

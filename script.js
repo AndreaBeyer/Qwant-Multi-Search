@@ -51,7 +51,7 @@ const deeplEnabledByDefault = browserLanguage.startsWith("fr") || browserLanguag
 // Valeur de la barre de recherche Qwant, ou "" si elle est absente
 // (ex. pages /account/).
 function getSearchQuery() {
-    const input = $(SEARCH_INPUT_SELECTOR);
+    const input = document.querySelector(SEARCH_INPUT_SELECTOR);
     return input ? input.value : "";
 }
 
@@ -89,7 +89,7 @@ async function loadAllSVGs() {
 }
 
 async function initializeQwantEnhancer() {
-    if (!$url.startsWith("https://www.qwant.com/")) return;
+    if (!window.location.href.startsWith("https://www.qwant.com/")) return;
     if (document.querySelector(".qse-button-container")) return;
 
     // Charger tous les SVG avant de créer les boutons
@@ -111,7 +111,7 @@ async function initializeQwantEnhancer() {
         .then(() => extensionApi?.storage?.local?.get(["enabledButtons", "buttonOrder"]))
         .catch(() => ({}))
         .then(({ enabledButtons = {}, buttonOrder } = {}) => {
-        const container = $create("div");
+        const container = document.createElement("div");
         container.className = "qse-button-container";
         container.setAttribute("aria-label", message("searchShortcuts"));
 
@@ -148,7 +148,7 @@ async function initializeQwantEnhancer() {
             attachTap(button, onClick);
             button.addEventListener("mousedown", function (event) {
                 if (event.button === 1) {
-                    $openBlank(typeof home === "function" ? home() : home);
+                    window.open(typeof home === "function" ? home() : home, "_blank");
                 }
             });
             container.appendChild(button);
@@ -158,11 +158,11 @@ async function initializeQwantEnhancer() {
         // droite (desktop uniquement, masquee par media query sur mobile).
         // runtime.openOptionsPage() n'existe pas dans un content script:
         // le clic passe par un message au background.
-        const settingsButton = $create("a");
+        const settingsButton = document.createElement("a");
         settingsButton.className = "qse-settings-button";
         settingsButton.setAttribute("aria-label", message("openOptions"));
         settingsButton.title = message("openOptions");
-        const settingsIcon = $create("img");
+        const settingsIcon = document.createElement("img");
         settingsIcon.src = extensionApi.runtime.getURL("images/action48.png");
         settingsIcon.alt = "";
         settingsButton.appendChild(settingsIcon);
@@ -252,7 +252,7 @@ function keepButtonsMounted(container, settingsButton) {
     }, 300);
 }
 
-if ($url.startsWith("https://www.qwant.com/")) {
+if (window.location.href.startsWith("https://www.qwant.com/")) {
     if (document.readyState === "loading") {
         document.addEventListener("DOMContentLoaded", initializeQwantEnhancer, { once: true });
     } else {
@@ -267,7 +267,7 @@ if ($url.startsWith("https://www.qwant.com/")) {
 function searchOrOpen(searchUrl, defaultUrl) {
     return () => {
         const query = getSearchQuery();
-        $open(query ? searchUrl + encodeURIComponent(query) : defaultUrl);
+        window.location.href = query ? searchUrl + encodeURIComponent(query) : defaultUrl;
     };
 }
 
@@ -275,9 +275,9 @@ function clickWikiHandler() {
     // get wiki version from browser language
     const wikiLang = navigator.language.slice(0, 2);
     const query = getSearchQuery();
-    $open(query
+    window.location.href = query
         ? "https://" + wikiLang + ".wikipedia.org/w/index.php?sort=relevance&search=" + encodeURIComponent(query)
-        : "https://" + wikiLang + ".wikipedia.org/");
+        : "https://" + wikiLang + ".wikipedia.org/";
 }
 
 async function clickTranslateHandler() {
@@ -285,7 +285,7 @@ async function clickTranslateHandler() {
 
     // If the search box is empty, open DeepL normally.
     if (!text) {
-        $open("https://www.deepl.com");
+        window.location.href = "https://www.deepl.com";
         return;
     }
 
@@ -305,14 +305,14 @@ async function clickTranslateHandler() {
         });
 
         if (response && response.ok && response.translation) {
-            $open("https://www.qwant.com/?q=" + encodeURIComponent(response.translation));
+            window.location.href = "https://www.qwant.com/?q=" + encodeURIComponent(response.translation);
         } else {
             console.error("DeepL translation failed:", response?.error || "unknown error");
-            $alert(message("translationError"));
+            alert(message("translationError"));
         }
     } catch (error) {
         console.error("DeepL translation request failed:", error);
-        $alert(message("translationError"));
+        alert(message("translationError"));
     }
 }
 
@@ -354,7 +354,7 @@ async function detectGermanFrenchOrEnglish(text, extensionApi) {
 ///////////////////////////////// Functions ////////////////////////////////////////////////
 
 function createButton(svg) {
-    const button = $create("a");
+    const button = document.createElement("a");
     button.className = "qse-button";
 
     const svgDocument = new DOMParser().parseFromString(svg, "image/svg+xml");
@@ -450,7 +450,7 @@ function addListeners() {
 
     // Cartes de sources de la Réponse Flash, affichée au-dessus des résultats.
     const getFlashLinks = () =>
-        Array.from($$(FLASH_LINK_SELECTOR)).filter(isVisible);
+        Array.from(document.querySelectorAll(FLASH_LINK_SELECTOR)).filter(isVisible);
 
     // Bouton "Voir la réponse détaillée" de la Réponse Flash.
     const getDetailedAnswerButton = () => {
@@ -461,7 +461,7 @@ function addListeners() {
     const getResultLinks = () => {
         const detailedAnswerButton = getDetailedAnswerButton();
         const flashLinks = getFlashLinks();
-        const containers = Array.from($$(RESULT_SELECTOR)).filter(isVisible);
+        const containers = Array.from(document.querySelectorAll(RESULT_SELECTOR)).filter(isVisible);
         const links = containers.map(findMainLink).filter(Boolean);
         // Repli si le data-testid de Qwant change: tous les liens externes
         // visibles de la page. Les liens flash sont exclus de ce repli
@@ -515,7 +515,7 @@ function addListeners() {
         const digitMatch = /^(?:Digit|Numpad)([1-9])$/.exec(event.code);
         if (digitMatch && event.altKey && !event.ctrlKey && !event.metaKey &&
             (event.code.startsWith("Digit") || (event.getModifierState?.("NumLock") ?? true))) {
-            const buttons = $$(".qse-button-container .qse-button");
+            const buttons = document.querySelectorAll(".qse-button-container .qse-button");
             const button = buttons[Number(digitMatch[1]) - 1];
             if (button) {
                 event.preventDefault();
@@ -527,7 +527,7 @@ function addListeners() {
         if (isEditableElement(document.activeElement)) return;
 
         if (event.key === "/") {
-            $(SEARCH_INPUT_SELECTOR)?.focus();
+            document.querySelector(SEARCH_INPUT_SELECTOR)?.focus();
             event.preventDefault();
             return;
         }
@@ -543,9 +543,9 @@ function addListeners() {
             if (!selectedLink.href) {
                 selectedLink.click();
             } else if (event.ctrlKey || event.metaKey) {
-                $openBlank(selectedLink.href);
+                window.open(selectedLink.href, "_blank");
             } else {
-                $open(selectedLink.href);
+                window.location.href = selectedLink.href;
             }
             return;
         }
