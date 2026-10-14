@@ -591,6 +591,15 @@ function addListeners() {
             return;
         }
 
+        // Echap quitte la searchbox et rend le focus a la page. Placé avant
+        // la garde des champs editables, sinon la touche serait ignoree
+        // pendant la saisie.
+        if (event.key === "Escape" && document.activeElement?.matches?.(SEARCH_INPUT_SELECTOR)) {
+            document.activeElement.blur();
+            event.preventDefault();
+            return;
+        }
+
         if (isEditableElement(document.activeElement)) return;
 
         if (event.key === "/") {
