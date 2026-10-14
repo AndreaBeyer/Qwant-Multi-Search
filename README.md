@@ -45,7 +45,7 @@ L'extension permet notamment d'utiliser :
 
 L'extension est disponible sur Mozilla Add-ons :
 
-👉 [Installer depuis Firefox Add-ons](https://addons.mozilla.org/)
+👉 [Installer depuis Firefox Add-ons](https://addons.mozilla.org/fr/firefox/addon/qwant-multi-search/)
 
 ### Installation depuis les sources
 
@@ -88,7 +88,7 @@ zip -r Qwant-Multi-Search.zip Qwant-Multi-Search
 
 L'extension est également destinée à être distribuée sur le **Chrome Web Store**.
 
-👉 [Chrome Web Store](https://chromewebstore.google.com/detail/qwant-search-enhancer/kepafadhpgppildfnbkndiebkpojjcgm)
+👉 [Chrome Web Store](https://chromewebstore.google.com/detail/qwant-multi-search/kepafadhpgppildfnbkndiebkpojjcgm)
 
 ### Installation depuis les sources
 
