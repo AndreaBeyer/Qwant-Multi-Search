@@ -412,6 +412,19 @@ function addListeners() {
 
     const isVisible = (element) => element.getBoundingClientRect().height > 0;
 
+    // Vraiment affiché à l'écran, pas seulement de hauteur > 0: détecte les
+    // copies rendues derrière un autre calque ou masquées (visibility,
+    // opacity), qu'isVisible ne voit pas. Utilisé pour les cartes flash.
+    const isOnScreen = (element) => {
+        const rect = element.getBoundingClientRect();
+        if (rect.height === 0) return false;
+        const hit = document.elementFromPoint(
+            Math.round(rect.left + rect.width / 2),
+            Math.round(rect.top + rect.height / 2)
+        );
+        return Boolean(hit && (hit === element || element.contains(hit)));
+    };
+
     // Clique le bouton "Plus de résultats" de Qwant s'il est visible. Un
     // délai minimal évite de re-cliquer pendant le chargement de la page
     // de résultats suivante (le bouton peut rester affiché quelques instants).
@@ -450,16 +463,20 @@ function addListeners() {
 
     // Cartes de sources de la Réponse Flash, affichée au-dessus des résultats.
     // Dédupliquées par URL au cas où Qwant rend la même carte dans deux
-    // conteneurs (un seul liseré, une seule étape de navigation par carte).
+    // conteneurs (un seul cadre, une seule étape de navigation par carte).
     const getFlashLinks = () => {
+        const links = Array.from(document.querySelectorAll(FLASH_LINK_SELECTOR));
+        const onScreen = links.filter(isOnScreen);
+        // Repli: si le test elementFromPoint n'en reconnaît aucune (par
+        // exemple à cause d'un calque transparent par-dessus), on garde les
+        // liens de hauteur > 0 plutôt que de perdre la navigation.
+        const candidates = onScreen.length > 0 ? onScreen : links.filter(isVisible);
         const seen = new Set();
-        return Array.from(document.querySelectorAll(FLASH_LINK_SELECTOR))
-            .filter(isVisible)
-            .filter((link) => {
-                if (seen.has(link.href)) return false;
-                seen.add(link.href);
-                return true;
-            });
+        return candidates.filter((link) => {
+            if (seen.has(link.href)) return false;
+            seen.add(link.href);
+            return true;
+        });
     };
 
     // Bouton "Voir la réponse détaillée" de la Réponse Flash.
@@ -489,15 +506,54 @@ function addListeners() {
         return items.concat(resultLinks);
     };
 
+    // Cadre de sélection flottant pour les éléments hors résultats (cartes
+    // de la Réponse Flash, bouton de réponse détaillée). Poser une classe
+    // sur l'élément de Qwant ne suffit pas ici: le overflow:hidden du
+    // carrousel rogne les surcouches, et un re-rendu de la page peut
+    // réécrire ses classes. Ce calque appartient à l'extension et suit
+    // l'élément au scroll et au redimensionnement.
+    let selectionMarker = null;
+    let markerTarget = null;
+
+    const positionSelectionMarker = () => {
+        if (!selectionMarker || !markerTarget) return;
+        const rect = markerTarget.getBoundingClientRect();
+        if (rect.width === 0 && rect.height === 0) return;
+        selectionMarker.style.left = `${Math.round(rect.left) - 4}px`;
+        selectionMarker.style.top = `${Math.round(rect.top) - 4}px`;
+        selectionMarker.style.width = `${Math.round(rect.width) + 8}px`;
+        selectionMarker.style.height = `${Math.round(rect.height) + 8}px`;
+    };
+
+    const showSelectionMarker = (target) => {
+        if (!selectionMarker || !selectionMarker.isConnected) {
+            selectionMarker = document.createElement("div");
+            selectionMarker.className = "qse-selection-marker";
+            document.documentElement.appendChild(selectionMarker);
+            window.addEventListener("scroll", positionSelectionMarker, true);
+            window.addEventListener("resize", positionSelectionMarker);
+        }
+        markerTarget = target;
+        selectionMarker.style.display = "block";
+        positionSelectionMarker();
+    };
+
+    const hideSelectionMarker = () => {
+        markerTarget = null;
+        if (selectionMarker) selectionMarker.style.display = "none";
+    };
+
     const selectResult = (links, index) => {
         const link = links[index];
         if (!link) return false;
         selectedContainer?.classList.remove("qse-selected");
-        // Les cartes de la Réponse Flash ne sont pas des résultats classiques:
-        // le liseré entoure alors la carte entière ([data-slide-index]), ou
-        // le bouton lui-même pour la réponse détaillée.
-        selectedContainer = link.closest(RESULT_SELECTOR) || link.closest(FLASH_CARD_SELECTOR) || link.closest("button");
-        selectedContainer?.classList.add("qse-selected");
+        selectedContainer = link.closest(RESULT_SELECTOR);
+        if (selectedContainer) {
+            selectedContainer.classList.add("qse-selected");
+            hideSelectionMarker();
+        } else {
+            showSelectionMarker(link.closest(FLASH_CARD_SELECTOR) || link.closest("button") || link);
+        }
         // Pas de link.focus(): le navigateur dessinerait un cadre de focus
         // autour du titre en plus du liseré du conteneur. La touche Entrée
         // est gérée dans le listener keydown.
@@ -563,6 +619,7 @@ function addListeners() {
             selectedContainer?.classList.remove("qse-selected");
             selectedContainer = null;
             selectedLink = null;
+            hideSelectionMarker();
             currentFocus = -1;
             return;
         }
