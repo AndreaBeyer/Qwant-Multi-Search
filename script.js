@@ -470,15 +470,13 @@ function addListeners() {
             .filter(isVisible)
             .filter(isExternalLink)
             .filter((link) => !link.matches(FLASH_LINK_SELECTOR));
-        const items = flashLinks.concat(resultLinks);
+        // Ordre de navigation: cartes de la Réponse Flash, puis le bouton
+        // "Voir la réponse détaillée" juste après, puis les résultats. Le
+        // bouton apparaît après la page de résultats dans le DOM de Qwant,
+        // un tri par position ne ferait donc pas ce que l'on veut.
+        const items = flashLinks.slice();
         if (detailedAnswerButton) items.push(detailedAnswerButton);
-        // Ordre visuel de la page: le bouton de réponse détaillée et les
-        // cartes flash ne sont pas des résultats classiques et leur place
-        // dans le DOM peut changer. Le tri est stable, les liens de
-        // résultats conservent donc leur ordre relatif.
-        items.sort((a, b) =>
-            (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING) ? -1 : 0);
-        return items;
+        return items.concat(resultLinks);
     };
 
     const selectResult = (links, index) => {
