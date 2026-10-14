@@ -411,6 +411,11 @@ function addListeners() {
 
     const isVisible = (element) => element.getBoundingClientRect().height > 0;
 
+    // Debug temporaire de la navigation clavier, a retirer une fois le
+    // probleme de cartes flash diagnostique: trace dans la console la liste
+    // de navigation construite et la selection effectuee a chaque fleche.
+    const debugLog = (...args) => console.log("[QSE]", ...args);
+
     // Clique le bouton "Plus de résultats" de Qwant s'il est visible. Un
     // délai minimal évite de re-cliquer pendant le chargement de la page
     // de résultats suivante (le bouton peut rester affiché quelques instants).
@@ -454,9 +459,11 @@ function addListeners() {
     // pour ne pas les parcourir deux fois. Déduplication par URL au cas où
     // Qwant rend la même carte dans deux conteneurs.
     const getFlashLinks = () => {
-        const links = Array.from(document.querySelectorAll(FLASH_LINK_SELECTOR))
+        const all = Array.from(document.querySelectorAll(FLASH_LINK_SELECTOR));
+        const links = all
             .filter((link) => !link.closest(RESULT_SELECTOR))
             .filter(isVisible);
+        debugLog("liens ai_flash:", all.length, "trouves,", links.length, "retenus");
         const seen = new Set();
         return links.filter((link) => {
             if (seen.has(link.href)) return false;
@@ -489,7 +496,9 @@ function addListeners() {
         // un tri par position ne ferait donc pas ce que l'on veut.
         const items = flashLinks.slice();
         if (detailedAnswerButton) items.push(detailedAnswerButton);
-        return items.concat(resultLinks);
+        const navigation = items.concat(resultLinks);
+        debugLog("navigation:", navigation.map((item) => item.href || `[${item.tagName}]`));
+        return navigation;
     };
 
     // Cadre de sélection flottant pour les éléments hors résultats (cartes
@@ -531,7 +540,11 @@ function addListeners() {
 
     const selectResult = (links, index) => {
         const link = links[index];
-        if (!link) return false;
+        if (!link) {
+            debugLog("selection: aucun element a l'index", index);
+            return false;
+        }
+        debugLog("selection index", index, "->", link.href || `[${link.tagName}]`);
         selectedContainer?.classList.remove("qse-selected");
         selectedContainer = link.closest(RESULT_SELECTOR);
         if (selectedContainer) {
