@@ -513,17 +513,20 @@ function addListeners() {
     const getRelatedSearchLinks = () =>
         Array.from(document.querySelectorAll(RELATED_SEARCH_SELECTOR)).filter(isVisible);
 
-    // Page du chat (onglet Chat IA): la navigation clavier des résultats
-    // n'y a pas de sens, les flèches haut/bas doivent garder le
-    // défilement natif de la conversation. L'URL de l'onglet chat porte
-    // t=chat; en repli, l'onglet actif de la barre de catégories.
-    const isChatPage = () => {
+    // Recherche classique (onglet "Tous"): la navigation clavier des
+    // résultats n'a de sens que là. Sur les autres onglets (Chat IA,
+    // Images, Vidéos, Actualités, Shopping), les flèches haut/bas doivent
+    // garder leur comportement natif (défilement, conversation). L'URL de
+    // l'onglet Tous porte t=web ou pas de t; en repli, l'onglet actif de
+    // la barre de catégories.
+    const isClassicSearchPage = () => {
         try {
-            if (new URL(window.location.href).searchParams.get("t") === "chat") return true;
+            const category = new URL(window.location.href).searchParams.get("t");
+            return category === null || category === "web";
         } catch (error) {
             // URL illisible: essayer la barre d'onglets.
         }
-        return Boolean(document.querySelector('[data-testid="chatNavItem"][aria-current]'));
+        return Boolean(document.querySelector('[data-testid="webNavItem"][aria-current]'));
     };
 
     // Lien "Plus de vidéos" de la section vidéos. Qwant rend plusieurs
@@ -812,9 +815,10 @@ function addListeners() {
 
         if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
 
-        // Onglet Chat IA: pas de navigation clavier des résultats, les
-        // flèches gardent le défilement natif de la conversation.
-        if (isChatPage()) return;
+        // Navigation clavier des résultats réservée à la recherche
+        // classique (onglet "Tous"): ailleurs, les flèches gardent leur
+        // comportement natif.
+        if (!isClassicSearchPage()) return;
 
         const links = getResultLinks();
         // Pas de preventDefault tant que la navigation ne sélectionnera
