@@ -27,14 +27,6 @@ const IMAGE_DRAWER_ACTIONS_SELECTOR = '[data-testid="imageDrawerActions"]';
 // barre de navigation: les candidates sont bornées à la section (voir
 // getVideoMoreLinks).
 const VIDEO_MORE_SELECTOR = 'a[href*="t=videos"]';
-// Onglets de catégories de la recherche (Tous, Chat IA, Images, Vidéos,
-// Actualités, Shopping). Le data-click-label tab_bar_item_* est stable
-// d'un build à l'autre (même logique que le bouton "Voir la réponse
-// détaillée"), et l'onglet actif porte aria-current="page". Les URL des
-// onglets contiennent des paramètres de suivi (entry_point, t) absents
-// de la barre d'adresse: la comparaison d'URL n'est pas fiable, on cible
-// les attributs.
-const TAB_ITEM_SELECTOR = '[data-click-label^="tab_bar_item_"]';
 const SHOW_MORE_SELECTOR = '[data-testid="buttonShowMore"]';
 // Liens des cartes de sources de la Réponse Flash. Les classes du DOM de
 // Qwant sont régénérées à chaque build; le paramètre utm_campaign=ai_flash
@@ -521,12 +513,6 @@ function addListeners() {
     const getRelatedSearchLinks = () =>
         Array.from(document.querySelectorAll(RELATED_SEARCH_SELECTOR)).filter(isVisible);
 
-    // Onglets de catégories de la recherche (Tous, Chat IA, Images,
-    // Vidéos, Actualités, Shopping), dans l'ordre de la barre (l'ordre
-    // du DOM suit l'ordre visuel).
-    const getCategoryTabs = () =>
-        Array.from(document.querySelectorAll(TAB_ITEM_SELECTOR)).filter(isVisible);
-
     // Page du chat (onglet Chat IA): la navigation clavier des résultats
     // n'y a pas de sens, les flèches haut/bas doivent garder le
     // défilement natif de la conversation. L'URL de l'onglet chat porte
@@ -787,30 +773,6 @@ function addListeners() {
                 input.setSelectionRange(end, end);
             }
             event.preventDefault();
-            return;
-        }
-
-        // Flèches gauche/droite: basculer entre les catégories de la
-        // recherche (Tous, Chat IA, Images, Vidéos, Actualités,
-        // Shopping), avec rebouclage aux extrémités. Ces flèches ne
-        // servent à rien d'autre sur la page de résultats. Sans
-        // modificateur: Alt+Flèche (historique) et les autres
-        // combinaisons restent au navigateur. Un clic sur l'onglet
-        // plutôt que location.href: laisse le routage interne de Qwant
-        // opérer sans recharger la page.
-        if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
-            if (!event.altKey && !event.ctrlKey && !event.metaKey && !event.shiftKey) {
-                const tabs = getCategoryTabs();
-                const currentIndex = tabs.findIndex((tab) =>
-                    tab.getAttribute("aria-current") !== null);
-                if (tabs.length > 1 && currentIndex >= 0) {
-                    const nextIndex = event.key === "ArrowRight"
-                        ? (currentIndex + 1) % tabs.length
-                        : (currentIndex - 1 + tabs.length) % tabs.length;
-                    event.preventDefault();
-                    tabs[nextIndex].click();
-                }
-            }
             return;
         }
 
