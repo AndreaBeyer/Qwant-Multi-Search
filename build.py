@@ -25,7 +25,7 @@ EXCLUDE_FILES = {
     '.git', '.gitignore', '.gitattributes',
     'build.js', 'build.sh', 'build.py',
     'package.json', 'package-lock.json', 'node_modules',
-    'dist', 'BUILD.md', 'README.md', 'PRIVACY.md',
+    'dist', 'BUILD.md', 'PRIVACY.md',
 }
 
 # Files that must exist for a valid build

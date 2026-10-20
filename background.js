@@ -1,4 +1,4 @@
-const DEEPL_URL = "https://oneshot-free.www.deepl.com/v1/storefront/translate";
+const DEEPL_URL = "https://oneshot-free.www.deepl.com/v1/translate";
 const browserApi = globalThis.browser || globalThis.chrome;
 browserApi.runtime.onInstalled.addListener((details) => {
   if (details.reason === "install") {
